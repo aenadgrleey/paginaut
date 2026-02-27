@@ -2,6 +2,7 @@ package com.aenadgrleey.paginaut.compose
 
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
+import androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.runtime.Composable
 import com.aenadgrleey.paginaut.core.LoadStatus
@@ -11,12 +12,14 @@ context(scope: LazyGridScope)
 fun <Item : Any> PaginationState<Item>.items(
     key: ((Item) -> Any)? = null,
     contentType: (Item) -> Any? = { null },
+    span: (LazyGridItemSpanScope.(Item) -> GridItemSpan)? = null,
     itemContent: @Composable LazyGridItemScope.(Item) -> Unit,
 ) {
     scope.items(
         count = items.size,
         key = key?.let { keyFn -> { keyFn(items[it]) } },
         contentType = { contentType(items[it]) },
+        span = span?.let { spanFn -> { spanFn(items[it]) } },
     ) {
         itemContent(items[it])
     }
@@ -24,29 +27,50 @@ fun <Item : Any> PaginationState<Item>.items(
 
 context(scope: LazyGridScope)
 fun PaginationState<*>.firstPageLoading(
+    viewport: GridViewportState? = null,
     content: @Composable LazyGridItemScope.() -> Unit,
 ) {
     if (refresh is LoadStatus.Loading && items.isEmpty()) {
-        scope.item(key = PagerKeys.FIRST_PAGE_LOADING, span = { GridItemSpan(maxLineSpan) }) { content() }
+        scope.item(key = PagerKeys.FIRST_PAGE_LOADING, span = { GridItemSpan(maxLineSpan) }) {
+            if (viewport != null) {
+                FillRemainingHeight(viewport) { content() }
+            } else {
+                content()
+            }
+        }
     }
 }
 
 context(scope: LazyGridScope)
 fun PaginationState<*>.firstPageError(
+    viewport: GridViewportState? = null,
     content: @Composable LazyGridItemScope.(Throwable) -> Unit,
 ) {
     val error = refresh as? LoadStatus.Error
     if (error != null && items.isEmpty()) {
-        scope.item(key = PagerKeys.FIRST_PAGE_ERROR, span = { GridItemSpan(maxLineSpan) }) { content(error.cause) }
+        scope.item(key = PagerKeys.FIRST_PAGE_ERROR, span = { GridItemSpan(maxLineSpan) }) {
+            if (viewport != null) {
+                FillRemainingHeight(viewport) { content(error.cause) }
+            } else {
+                content(error.cause)
+            }
+        }
     }
 }
 
 context(scope: LazyGridScope)
 fun PaginationState<*>.empty(
+    viewport: GridViewportState? = null,
     content: @Composable LazyGridItemScope.() -> Unit,
 ) {
     if (items.isEmpty() && refresh is LoadStatus.Idle && forward is LoadStatus.EndReached) {
-        scope.item(key = PagerKeys.EMPTY, span = { GridItemSpan(maxLineSpan) }) { content() }
+        scope.item(key = PagerKeys.EMPTY, span = { GridItemSpan(maxLineSpan) }) {
+            if (viewport != null) {
+                FillRemainingHeight(viewport) { content() }
+            } else {
+                content()
+            }
+        }
     }
 }
 
