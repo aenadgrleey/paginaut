@@ -104,6 +104,47 @@ fun ItemList(pager: Pager<Int, Item>) {
 
 Also available: `PaginatedLazyRow`, `PaginatedLazyVerticalGrid`, `PaginatedLazyHorizontalGrid`, `PaginatedLazyVerticalStaggeredGrid`, `PaginatedLazyHorizontalStaggeredGrid`.
 
+#### Viewport State (auto-filling state indicators in grids/lists)
+
+When you have full-span header items above paginated content, first-page state indicators (loading, error, empty) should fill the remaining viewport space. `GridViewportState` / `ListViewportState` handle this automatically — no manual height tracking needed:
+
+```kotlin
+@Composable
+fun FeedScreen(pager: Pager<Int, CarModel>) {
+    val gridState = rememberLazyGridState()
+    val viewport = rememberGridViewport(gridState)
+    val paginationState by pager.state.collectAsState()
+
+    PagerEffect(pager, gridState)
+
+    LazyVerticalGrid(
+        state = gridState,
+        columns = GridCells.Fixed(2),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        // Mark full-span headers with Modifier.extensive(viewport)
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            FiltersHeader(modifier = Modifier.extensive(viewport))
+        }
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            SortingHeader(modifier = Modifier.extensive(viewport))
+        }
+
+        // Pass viewport to state indicators — they auto-fill remaining space
+        with(paginationState) {
+            items(key = { it.id }) { item -> ItemCard(item) }
+            firstPageLoading(viewport) { CircularProgressIndicator() }
+            firstPageError(viewport) { error -> Text("Error: ${error.message}") }
+            empty(viewport) { Text("No items") }
+            forwardLoading { CircularProgressIndicator() }
+            forwardError { Text("Load failed") }
+        }
+    }
+}
+```
+
+The same pattern works for lists with `ListViewportState` / `rememberListViewport(listState)`.
+
 ### SwiftUI
 
 ```swift
@@ -138,6 +179,12 @@ Also available: `PaginatedScrollRow`, `PaginatedVGrid(columns:)`, `PaginatedHGri
 - **`LoadStatus`** — `Idle`, `Loading`, `Error(cause)`, or `EndReached`.
 - **`Page<Key, Item>`** — A single page result: `items`, `nextKey`, `prevKey`.
 - **`LoadParams<Key>`** — Passed to your load function: `key`, `direction`, `pageSize`.
+
+### Compose Types
+
+- **`GridViewportState`** — Tracks extensive (full-span) items' heights in a `LazyVerticalGrid` and computes remaining viewport space for state indicators. Created via `rememberGridViewport(gridState)`.
+- **`ListViewportState`** — Same for `LazyColumn`/`LazyRow`. Created via `rememberListViewport(listState)`.
+- **`Modifier.extensive(viewport)`** — Apply to full-span header items to track their height.
 
 
 ## License
