@@ -76,7 +76,7 @@ fun <Item : Any> PaginatedLazyVerticalGrid(
     ) {
         paginationState.backwardLoading { backwardLoadingIndicator() }
         paginationState.backwardError { backwardErrorIndicator(it) }
-        paginationState.items(key, contentType, itemContent)
+        paginationState.items(key = key, contentType = contentType, itemContent = itemContent)
         paginationState.forwardLoading { forwardLoadingIndicator() }
         paginationState.forwardError { forwardErrorIndicator(it) }
         paginationState.endReached { endReachedIndicator() }
