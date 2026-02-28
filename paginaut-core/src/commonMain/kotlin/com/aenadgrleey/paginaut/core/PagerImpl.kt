@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +33,7 @@ internal class PagerImpl<Key : Any, Item : Any>(
 
     private var forwardKey: Key? = initialKey
     private var backwardKey: Key? = null
+    private var loadJob: Job? = null
 
     override fun init() {
         if (!initialized.compareAndSet(expectedValue = false, newValue = true)) return
@@ -40,8 +42,15 @@ internal class PagerImpl<Key : Any, Item : Any>(
 
     override fun onVisibleRangeChanged(range: VisibleRange) {
         init()
-        scope.launch {
+        loadJob?.cancel()
+        loadJob = scope.launch {
             mutex.withLock {
+                _state.update { s ->
+                    s.copy(
+                        forward = if (s.forward == LoadStatus.Loading) LoadStatus.Idle else s.forward,
+                        backward = if (s.backward == LoadStatus.Loading) LoadStatus.Idle else s.backward,
+                    )
+                }
                 val s = _state.value
                 val count = s.items.size
 
@@ -57,6 +66,7 @@ internal class PagerImpl<Key : Any, Item : Any>(
     }
 
     override fun refresh() {
+        loadJob?.cancel()
         scope.launch {
             mutex.withLock {
                 forwardKey = initialKey
@@ -68,6 +78,7 @@ internal class PagerImpl<Key : Any, Item : Any>(
     }
 
     override fun jumpTo(key: Key) {
+        loadJob?.cancel()
         scope.launch {
             mutex.withLock {
                 forwardKey = key
