@@ -47,3 +47,36 @@ fun <Key : Any, Item : Any> SimplePager(
         override fun retry() = pager.retry(Direction.Forward)
     }
 }
+
+fun <Item : Any> SimpleOffsetPager(
+    pageSize: Int = 20,
+    prefetchDistance: Int = 5,
+    load: suspend (offset: Int) -> List<Item>,
+): SimplePager<Int, Item> = SimplePager(
+    pageSize = pageSize,
+    prefetchDistance = prefetchDistance,
+    initialKey = 0,
+) { offset ->
+    val items = load(offset ?: 0)
+    Page(
+        items = items,
+        key = if (items.size < pageSize) null else (offset ?: 0) + items.size,
+    )
+}
+
+fun <Id : Any, Item : Any> SimpleIdPager(
+    idSelector: (Item) -> Id,
+    pageSize: Int = 20,
+    prefetchDistance: Int = 5,
+    load: suspend (afterId: Id?) -> List<Item>,
+): SimplePager<Id, Item> = SimplePager(
+    pageSize = pageSize,
+    prefetchDistance = prefetchDistance,
+    initialKey = null,
+) { afterId ->
+    val items = load(afterId)
+    Page(
+        items = items,
+        key = if (items.size < pageSize) null else items.lastOrNull()?.let(idSelector),
+    )
+}

@@ -1,7 +1,5 @@
 package com.aenadgrleey.paginaut.core
 
-import kotlinx.coroutines.flow.StateFlow
-
 enum class Direction { Forward, Backward, Refresh }
 
 sealed interface LoadStatus {
@@ -12,16 +10,36 @@ sealed interface LoadStatus {
 }
 
 data class LoadParams<Key : Any>(
-    val key: Key?,
+    internal val key: Key?,
     val direction: Direction,
     val pageSize: Int,
-)
+) {
+    val forwardKey: Key? get() = key.takeIf { direction == Direction.Forward }
+    val backwardKey: Key? get() = key.takeIf { direction == Direction.Backward }
 
-data class Page<out Key : Any, out Item : Any>(
+    fun <Item : Any> nextPage(
+        items: List<Item>,
+        nextKey: (Direction) -> Key?,
+        prevKey: (Direction) -> Key?,
+        direction: Direction = this.direction,
+    ): Page<Key, Item> = when (direction) {
+        Direction.Forward -> Page(items, nextKey = nextKey(direction), prevKey = null)
+        Direction.Backward -> Page(items, nextKey = null, prevKey = prevKey(direction))
+        Direction.Refresh -> Page(items, nextKey = nextKey(direction), prevKey = prevKey(direction))
+    }
+}
+
+data class Page<out Key : Any, out Item : Any>
+internal constructor(
     val items: List<Item>,
     val nextKey: Key?,
     val prevKey: Key?,
 )
+
+fun <Key : Any, Item : Any> Page(
+    items: List<Item>,
+    key: Key?,
+): Page<Key, Item> = Page(items, nextKey = key, prevKey = null)
 
 data class VisibleRange(
     val firstVisible: Int = 0,

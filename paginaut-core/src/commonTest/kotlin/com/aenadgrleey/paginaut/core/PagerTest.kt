@@ -12,8 +12,7 @@ class PagerTest {
             val start = key ?: 0
             Page(
                 items = listOf("item-$start", "item-${start + 1}"),
-                nextKey = start + 2,
-                prevKey = null,
+                key = start + 2,
             )
         }
         pager.init()
