@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -191,5 +192,115 @@ class PagerTest {
         assertEquals(false, forwardCompleted)
         // State should be fresh from refresh
         assertEquals(5, pager.state.value.items.size)
+    }
+
+    @Test
+    fun continueLoading_resumesForwardAfterEndReached() = runTest {
+        var loadCount = 0
+        val pager = Pager<Int, String>(
+            pageSize = 3,
+            prefetchDistance = 1,
+            coroutineContext = UnconfinedTestDispatcher(testScheduler),
+        ) { params ->
+            loadCount++
+            when (params.direction) {
+                Direction.Init -> Page(
+                    items = listOf("a", "b", "c"),
+                    nextKey = 10,
+                    prevKey = null,
+                    endReached = true,
+                )
+                Direction.Forward -> Page(
+                    items = listOf("d", "e"),
+                    nextKey = null,
+                    prevKey = null,
+                    endReached = true,
+                )
+                Direction.Backward -> Page(items = emptyList(), nextKey = null, prevKey = null)
+            }
+        }
+
+        pager.init()
+        advanceUntilIdle()
+        assertEquals(1, loadCount)
+        assertEquals(LoadStatus.EndReached, pager.state.value.forward)
+
+        pager.continueLoading(Direction.Forward)
+        pager.onVisibleRangeChanged(VisibleRange(firstVisible = 0, lastVisible = 2))
+        advanceUntilIdle()
+
+        assertEquals(2, loadCount)
+        assertEquals(listOf("a", "b", "c", "d", "e"), pager.state.value.items)
+    }
+
+    @Test
+    fun continueLoading_resumesBackwardAfterEndReached() = runTest {
+        var loadCount = 0
+        var receivedKey: Int? = null
+        val pager = Pager<Int, String>(
+            pageSize = 3,
+            prefetchDistance = 1,
+            coroutineContext = UnconfinedTestDispatcher(testScheduler),
+        ) { params ->
+            loadCount++
+            when (params.direction) {
+                Direction.Init -> Page(
+                    items = listOf("c", "d", "e"),
+                    nextKey = null,
+                    prevKey = 5,
+                    endReached = true,
+                )
+                Direction.Forward -> Page(items = emptyList(), nextKey = null, prevKey = null)
+                Direction.Backward -> {
+                    receivedKey = params.key
+                    Page(
+                        items = listOf("a", "b"),
+                        nextKey = null,
+                        prevKey = null,
+                        endReached = true,
+                    )
+                }
+            }
+        }
+
+        pager.init()
+        advanceUntilIdle()
+        assertEquals(1, loadCount)
+        assertEquals(LoadStatus.EndReached, pager.state.value.backward)
+
+        pager.continueLoading(Direction.Backward)
+        pager.onVisibleRangeChanged(VisibleRange(firstVisible = 0, lastVisible = 0))
+        advanceUntilIdle()
+
+        assertEquals(2, loadCount)
+        assertEquals(5, receivedKey, "Should use preserved backward key")
+        assertEquals(listOf("a", "b", "c", "d", "e"), pager.state.value.items)
+    }
+
+    @Test
+    fun continueLoading_noOpWhenNotEndReached() = runTest {
+        val pager = Pager<Int, String>(
+            pageSize = 3,
+            coroutineContext = UnconfinedTestDispatcher(testScheduler),
+        ) { params ->
+            when (params.direction) {
+                Direction.Init -> Page(
+                    items = listOf("a", "b", "c"),
+                    nextKey = 10,
+                    prevKey = null,
+                )
+                else -> Page(items = emptyList(), nextKey = null, prevKey = null)
+            }
+        }
+
+        pager.init()
+        advanceUntilIdle()
+        assertEquals(LoadStatus.Idle, pager.state.value.forward)
+
+        pager.continueLoading(Direction.Forward)
+        advanceUntilIdle()
+
+        // Should remain Idle, not change
+        assertEquals(LoadStatus.Idle, pager.state.value.forward)
     }
 }

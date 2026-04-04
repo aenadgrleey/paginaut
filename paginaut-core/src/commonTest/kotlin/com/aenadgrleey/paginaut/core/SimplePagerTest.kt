@@ -336,6 +336,88 @@ class SimplePagerTest {
     }
 
     // ===========================================
+    // 5a. CONTINUE LOADING
+    // ===========================================
+
+    @Test
+    fun continueLoading_resumesAfterEndReached() = runTest {
+        var loadCount = 0
+        val pager = SimplePager<Int, String>(
+            pageSize = 2,
+            prefetchDistance = 1,
+            coroutineContext = UnconfinedTestDispatcher(testScheduler),
+        ) { _ ->
+            loadCount++
+            if (loadCount == 1) {
+                SimplePage(items = listOf("item-1"), nextKey = 2, endReached = true)
+            } else {
+                SimplePage(items = listOf("item-2"), nextKey = null, endReached = true)
+            }
+        }
+
+        pager.init()
+        advanceUntilIdle()
+        assertEquals(1, loadCount)
+        assertEquals(LoadStatus.EndReached, pager.state.value.loadStatus)
+
+        // Resume loading — should use preserved key
+        pager.continueLoading()
+        pager.onVisibleRangeChanged(VisibleRange(firstVisible = 0, lastVisible = 1))
+        advanceUntilIdle()
+
+        assertEquals(2, loadCount)
+        assertEquals(listOf("item-1", "item-2"), pager.state.value.items)
+    }
+
+    @Test
+    fun continueLoading_noOpWhenNotEndReached() = runTest {
+        var loadCount = 0
+        val pager = SimplePager<Int, String>(
+            pageSize = 2,
+            coroutineContext = UnconfinedTestDispatcher(testScheduler),
+        ) { _ ->
+            loadCount++
+            SimplePage(items = listOf("item-$loadCount"), nextKey = loadCount + 1)
+        }
+
+        pager.init()
+        advanceUntilIdle()
+        assertEquals(LoadStatus.Idle, pager.state.value.loadStatus)
+
+        // continueLoading on Idle should be a no-op
+        pager.continueLoading()
+        advanceUntilIdle()
+
+        assertEquals(LoadStatus.Idle, pager.state.value.loadStatus)
+    }
+
+    @Test
+    fun continueLoading_preservesKeyFromEndReachedPage() = runTest {
+        var receivedKey: Int? = null
+        var loadCount = 0
+        val pager = SimplePager<Int, String>(
+            pageSize = 2,
+            prefetchDistance = 1,
+            coroutineContext = UnconfinedTestDispatcher(testScheduler),
+        ) { key ->
+            loadCount++
+            receivedKey = key
+            SimplePage(items = listOf("item-$loadCount"), nextKey = 42, endReached = true)
+        }
+
+        pager.init()
+        advanceUntilIdle()
+        assertEquals(1, loadCount)
+
+        pager.continueLoading()
+        pager.onVisibleRangeChanged(VisibleRange(firstVisible = 0, lastVisible = 0))
+        advanceUntilIdle()
+
+        assertEquals(2, loadCount)
+        assertEquals(42, receivedKey, "Should re-use the key returned by the end-reached page")
+    }
+
+    // ===========================================
     // 6. SimpleOffsetPager SPECIFICS
     // ===========================================
 
