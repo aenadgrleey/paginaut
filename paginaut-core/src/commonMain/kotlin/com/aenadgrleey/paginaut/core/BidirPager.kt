@@ -23,27 +23,28 @@ open class BidirPager<Key : Any, Item : Any>(
     private val prefetchDistance: Int = 5,
     var initialKey: Key? = null,
     coroutineContext: CoroutineContext = Dispatchers.Default,
-    private val load: suspend (LoadParams<Key>) -> Page<Key, Item>,
+    deduplicateBy: ((Item) -> Any)? = null,
+    load: (suspend (LoadParams<Key>) -> Page<Key, Item>)? = null,
 ) {
 
+    private val _load = load
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val mutex = Mutex()
     private val _state = MutableStateFlow(PaginationState<Item>())
-    private val initialized = AtomicBoolean(false)
-
     val state: StateFlow<PaginationState<Item>> = _state.asStateFlow()
+    private val initialized = AtomicBoolean(false)
 
     private var forwardKey: Key? = null
     private var backwardKey: Key? = null
     private var forwardJob: Job? = null
     private var backwardJob: Job? = null
 
-    open fun init() {
+    fun init() {
         if (!initialized.compareAndSet(expectedValue = false, newValue = true)) return
         refresh()
     }
 
-    open fun onVisibleRangeChanged(range: VisibleRange) {
+    fun onVisibleRangeChanged(range: VisibleRange) {
         init()
         val s = _state.value
         val count = s.items.size
@@ -61,7 +62,7 @@ open class BidirPager<Key : Any, Item : Any>(
         }
     }
 
-    open fun refresh(key: Key? = initialKey) {
+    fun refresh(key: Key? = initialKey) {
         forwardJob?.cancel()
         backwardJob?.cancel()
         scope.launch {
@@ -75,9 +76,9 @@ open class BidirPager<Key : Any, Item : Any>(
         }
     }
 
-    open fun jumpTo(key: Key) = refresh(key)
+    fun jumpTo(key: Key) = refresh(key)
 
-    open fun retry(direction: Direction) {
+    fun retry(direction: Direction) {
         scope.launch {
             mutex.withLock {
                 val status = when (direction) {
@@ -90,21 +91,33 @@ open class BidirPager<Key : Any, Item : Any>(
         }
     }
 
-    open fun continueForward() {
+    fun continueForward() {
         scope.launch { mutex.withLock { doLoad(Direction.Forward) } }
     }
 
-    open fun continueBackward() {
+    fun continueBackward() {
         scope.launch { mutex.withLock { doLoad(Direction.Backward) } }
     }
 
-    open fun update(block: (List<Item>) -> List<Item>) {
+    fun update(block: (List<Item>) -> List<Item>) {
         scope.launch {
             mutex.withLock { _state.update { it.copy(items = block(it.items)) } }
         }
     }
 
-    open fun close() = scope.cancel()
+    fun close() = scope.cancel()
+
+    protected open suspend fun load(params: LoadParams<Key>) =
+        requireNotNull(_load?.invoke(params)) { "load() must be overridden or provided via constructor" }
+
+    open val deduplicateBy: ((Item) -> Any)? = deduplicateBy
+
+    private fun deduplicate(items: List<Item>): List<Item> {
+        val selector = deduplicateBy ?: return items
+        val seen = LinkedHashMap<Any, Item>(items.size)
+        for (item in items) seen[selector(item)] = item
+        return if (seen.size == items.size) items else seen.values.toList()
+    }
 
     private suspend fun doLoad(direction: Direction) {
         val key = when (direction) {
@@ -121,13 +134,15 @@ open class BidirPager<Key : Any, Item : Any>(
             }
         }
 
-        runCatching { load(LoadParams(key, direction, pageSize)) }
+        runCatching { this@BidirPager.load(LoadParams(key, direction, pageSize)) }
             .onSuccess { page ->
                 _state.update { current ->
-                    val newItems = when (direction) {
-                        Direction.Forward, Direction.Init -> current.items + page.items
-                        Direction.Backward -> page.items + current.items
-                    }
+                    val newItems = deduplicate(
+                        when (direction) {
+                            Direction.Forward, Direction.Init -> current.items + page.items
+                            Direction.Backward -> page.items + current.items
+                        }
+                    )
                     when (direction) {
                         Direction.Init -> {
                             forwardKey = page.nextKey ?: forwardKey
