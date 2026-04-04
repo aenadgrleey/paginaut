@@ -15,25 +15,28 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalAtomicApi::class)
 internal class PagerImpl<Key : Any, Item : Any>(
     private val pageSize: Int,
     private val prefetchDistance: Int,
-    private val initialKey: Key?,
+    override var initialKey: Key?,
     private val load: suspend (LoadParams<Key>) -> Page<Key, Item>,
+    coroutineContext: CoroutineContext = Dispatchers.Default,
 ) : Pager<Key, Item> {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val mutex = Mutex()
     private val _state = MutableStateFlow(PaginationState<Item>())
     private val initialized = AtomicBoolean(false)
 
     override val state: StateFlow<PaginationState<Item>> = _state.asStateFlow()
 
-    private var forwardKey: Key? = initialKey
+    private var forwardKey: Key? = null
     private var backwardKey: Key? = null
-    private var loadJob: Job? = null
+    private var forwardJob: Job? = null
+    private var backwardJob: Job? = null
 
     override fun init() {
         if (!initialized.compareAndSet(expectedValue = false, newValue = true)) return
@@ -42,49 +45,32 @@ internal class PagerImpl<Key : Any, Item : Any>(
 
     override fun onVisibleRangeChanged(range: VisibleRange) {
         init()
-        loadJob?.cancel()
-        loadJob = scope.launch {
-            mutex.withLock {
-                _state.update { s ->
-                    s.copy(
-                        forward = if (s.forward == LoadStatus.Loading) LoadStatus.Idle else s.forward,
-                        backward = if (s.backward == LoadStatus.Loading) LoadStatus.Idle else s.backward,
-                    )
-                }
-                val s = _state.value
-                val count = s.items.size
+        val s = _state.value
+        val count = s.items.size
 
-                if (range.lastVisible + prefetchDistance >= count && s.forward == LoadStatus.Idle) {
-                    doLoad(Direction.Forward)
-                }
+        if (range.lastVisible + prefetchDistance >= count && s.forward == LoadStatus.Idle) {
+            if (forwardJob?.isActive != true) {
+                forwardJob = scope.launch { mutex.withLock { doLoad(Direction.Forward) } }
+            }
+        }
 
-                if (range.firstVisible - prefetchDistance <= 0 && s.backward == LoadStatus.Idle) {
-                    doLoad(Direction.Backward)
-                }
+        if (range.firstVisible - prefetchDistance <= 0 && s.backward == LoadStatus.Idle) {
+            if (backwardJob?.isActive != true) {
+                backwardJob = scope.launch { mutex.withLock { doLoad(Direction.Backward) } }
             }
         }
     }
 
-    override fun refresh() {
-        loadJob?.cancel()
+    override fun refresh(key: Key?) {
+        forwardJob?.cancel()
+        backwardJob?.cancel()
         scope.launch {
             mutex.withLock {
-                forwardKey = initialKey
-                backwardKey = null
-                _state.value = PaginationState(refresh = LoadStatus.Loading)
-                doLoad(Direction.Refresh)
-            }
-        }
-    }
-
-    override fun jumpTo(key: Key) {
-        loadJob?.cancel()
-        scope.launch {
-            mutex.withLock {
+                initialKey = key
                 forwardKey = key
                 backwardKey = null
-                _state.value = PaginationState(refresh = LoadStatus.Loading)
-                doLoad(Direction.Refresh)
+                _state.value = PaginationState(init = LoadStatus.Loading)
+                doLoad(Direction.Init)
             }
         }
     }
@@ -94,9 +80,9 @@ internal class PagerImpl<Key : Any, Item : Any>(
             mutex.withLock {
                 _state.update {
                     when (direction) {
-                        Direction.Forward -> it.copy(forward = LoadStatus.Idle)
-                        Direction.Backward -> it.copy(backward = LoadStatus.Idle)
-                        Direction.Refresh -> it.copy(refresh = LoadStatus.Idle)
+                        Direction.Forward -> it.copy(forward = LoadStatus.Loading)
+                        Direction.Backward -> it.copy(backward = LoadStatus.Loading)
+                        Direction.Init -> it.copy(init = LoadStatus.Loading)
                     }
                 }
                 doLoad(direction)
@@ -111,24 +97,17 @@ internal class PagerImpl<Key : Any, Item : Any>(
     override fun close() = scope.cancel()
 
     private suspend fun doLoad(direction: Direction) {
-        val current = _state.value
-        when (direction) {
-            Direction.Forward -> if (current.forward != LoadStatus.Idle) return
-            Direction.Backward -> if (current.backward != LoadStatus.Idle) return
-            Direction.Refresh -> {}
-        }
-
         val key = when (direction) {
             Direction.Forward -> forwardKey
             Direction.Backward -> backwardKey
-            Direction.Refresh -> forwardKey
+            Direction.Init -> initialKey
         }
 
         _state.update {
             when (direction) {
                 Direction.Forward -> it.copy(forward = LoadStatus.Loading)
                 Direction.Backward -> it.copy(backward = LoadStatus.Loading)
-                Direction.Refresh -> it.copy(refresh = LoadStatus.Loading)
+                Direction.Init -> it.copy(init = LoadStatus.Loading)
             }
         }
 
@@ -136,16 +115,16 @@ internal class PagerImpl<Key : Any, Item : Any>(
             .onSuccess { page ->
                 _state.update { current ->
                     val newItems = when (direction) {
-                        Direction.Forward, Direction.Refresh -> current.items + page.items
+                        Direction.Forward, Direction.Init -> current.items + page.items
                         Direction.Backward -> page.items + current.items
                     }
                     when (direction) {
-                        Direction.Refresh -> {
+                        Direction.Init -> {
                             forwardKey = page.nextKey
                             backwardKey = page.prevKey
                             current.copy(
                                 items = newItems,
-                                refresh = LoadStatus.Idle,
+                                init = LoadStatus.Idle,
                                 forward = if (page.nextKey == null) LoadStatus.EndReached else LoadStatus.Idle,
                                 backward = if (page.prevKey == null) LoadStatus.EndReached else LoadStatus.Idle,
                             )
@@ -173,7 +152,7 @@ internal class PagerImpl<Key : Any, Item : Any>(
                     when (direction) {
                         Direction.Forward -> it.copy(forward = LoadStatus.Error(e))
                         Direction.Backward -> it.copy(backward = LoadStatus.Error(e))
-                        Direction.Refresh -> it.copy(refresh = LoadStatus.Error(e))
+                        Direction.Init -> it.copy(init = LoadStatus.Error(e))
                     }
                 }
             }

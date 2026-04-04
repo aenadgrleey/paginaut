@@ -30,7 +30,7 @@ fun PaginationState<*>.firstPageLoading(
     viewport: GridViewportState? = null,
     content: @Composable LazyGridItemScope.() -> Unit,
 ) {
-    if (refresh is LoadStatus.Loading && items.isEmpty()) {
+    if (init is LoadStatus.Loading && items.isEmpty()) {
         scope.item(key = PagerKeys.FIRST_PAGE_LOADING, span = { GridItemSpan(maxLineSpan) }) {
             if (viewport != null) {
                 FillRemainingHeight(viewport) { content() }
@@ -46,7 +46,7 @@ fun PaginationState<*>.firstPageError(
     viewport: GridViewportState? = null,
     content: @Composable LazyGridItemScope.(Throwable) -> Unit,
 ) {
-    val error = refresh as? LoadStatus.Error
+    val error = init as? LoadStatus.Error
     if (error != null && items.isEmpty()) {
         scope.item(key = PagerKeys.FIRST_PAGE_ERROR, span = { GridItemSpan(maxLineSpan) }) {
             if (viewport != null) {
@@ -63,7 +63,7 @@ fun PaginationState<*>.empty(
     viewport: GridViewportState? = null,
     content: @Composable LazyGridItemScope.() -> Unit,
 ) {
-    if (items.isEmpty() && refresh is LoadStatus.Idle && forward is LoadStatus.EndReached) {
+    if (items.isEmpty() && init is LoadStatus.Idle && forward is LoadStatus.EndReached) {
         scope.item(key = PagerKeys.EMPTY, span = { GridItemSpan(maxLineSpan) }) {
             if (viewport != null) {
                 FillRemainingHeight(viewport) { content() }

@@ -43,18 +43,18 @@ fun <Item : Any> PaginatedLazyColumn(
     itemContent: @Composable LazyItemScope.(Item) -> Unit,
 ) {
     when {
-        paginationState.refresh is LoadStatus.Loading && paginationState.items.isEmpty() -> {
+        paginationState.init is LoadStatus.Loading && paginationState.items.isEmpty() -> {
             Box(modifier, contentAlignment = Alignment.Center) { refreshIndicator() }
             return
         }
-        paginationState.refresh is LoadStatus.Error && paginationState.items.isEmpty() -> {
+        paginationState.init is LoadStatus.Error && paginationState.items.isEmpty() -> {
             Box(modifier, contentAlignment = Alignment.Center) {
-                refreshErrorIndicator((paginationState.refresh as LoadStatus.Error).cause)
+                refreshErrorIndicator((paginationState.init as LoadStatus.Error).cause)
             }
             return
         }
         paginationState.items.isEmpty()
-                && paginationState.refresh is LoadStatus.Idle
+                && paginationState.init is LoadStatus.Idle
                 && paginationState.forward is LoadStatus.EndReached -> {
             Box(modifier, contentAlignment = Alignment.Center) { emptyIndicator() }
             return

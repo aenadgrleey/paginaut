@@ -39,47 +39,96 @@ Add the `paginaut-swiftui` package to your Xcode project or `Package.swift`.
 
 ## Usage
 
-### Core
+### SimpleOffsetPager
 
-Create a pager with a load function that returns pages of data:
+For APIs with offset-based pagination:
 
 ```kotlin
-val pager = SimplePager<Int, Item>(
-    pageSize = 20,
-    prefetchDistance = 5,
-    initialKey = 0,
-) { key ->
-    val response = api.getItems(page = key ?: 0)
-    Page(
-        items = response.items,
-        nextKey = response.nextPage,
-        prevKey = null,
-    )
+val pager = SimpleOffsetPager<Article>(pageSize = 20) { offset ->
+    api.getArticles(offset = offset, limit = 20)
 }
 
 pager.init()
 
 // Collect state
 pager.state.collect { state ->
-    val items = state.items       // List<Item>
-    val loading = state.forward   // LoadStatus
+    val items = state.items         // List<Article>
+    val status = state.loadStatus   // LoadStatus
 }
 ```
 
-For bidirectional pagination, use `Pager` directly:
+### SimpleIdPager
+
+For cursor/id-based APIs that paginate by last item id:
 
 ```kotlin
-val pager = Pager<Int, Item>(
-    pageSize = 20,
-    initialKey = 0,
-) { params ->
-    val response = api.getItems(page = params.key ?: 0)
-    Page(
-        items = response.items,
-        nextKey = response.nextPage,
-        prevKey = response.prevPage,
+val pager = SimpleIdPager<Long, Message>(
+    idSelector = { it.id },
+    pageSize = 30,
+) { afterId ->
+    api.getMessages(afterId = afterId, limit = 30)
+}
+```
+
+### SimplePager
+
+For custom key-based forward-only pagination:
+
+```kotlin
+val pager = SimplePager<String, Post>(
+    pageSize = 25,
+    initialKey = null,
+) { cursor ->
+    val response = api.getPosts(cursor = cursor, limit = 25)
+    SimplePage(
+        items = response.posts,
+        nextKey = response.nextCursor, // null signals end of list
     )
 }
+```
+
+### Pager (bidirectional)
+
+For bidirectional pagination (e.g. chat starting from a specific message):
+
+```kotlin
+val pager = Pager<Long, ChatMessage>(
+    pageSize = 20,
+    initialKey = targetMessageId, // start loading from this point
+) { params ->
+    params.nextPage(
+        items = api.getMessages(
+            aroundId = params.initKey,    // non-null only on Init
+            afterId = params.forwardKey,  // non-null only on Forward
+            beforeId = params.backwardKey, // non-null only on Backward
+            limit = params.pageSize,
+        ),
+        nextKey = { items.lastOrNull()?.id },
+        prevKey = { items.firstOrNull()?.id },
+    )
+}
+
+// Jump to a different position
+pager.jumpTo(key = otherMessageId)
+```
+
+### State management
+
+```kotlin
+// Refresh (reload from initial key)
+pager.refresh()
+
+// Retry after error
+pager.retry(Direction.Forward) // Pager
+pager.retry()                  // SimplePager
+
+// Update items in-place (e.g. toggle favorite)
+pager.update { items ->
+    items.map { if (it.id == targetId) it.copy(isFavorite = true) else it }
+}
+
+// Cleanup
+pager.close()
 ```
 
 ### Compose
@@ -134,7 +183,8 @@ Also available: `PaginatedScrollRow`, `PaginatedVGrid(columns:)`, `PaginatedHGri
 
 - **`Pager<Key, Item>`** — Main interface. Exposes `state: StateFlow<PaginationState>`, plus `refresh()`, `retry(direction)`, `jumpTo(key)`, `update(block)`, and `close()`.
 - **`SimplePager<Key, Item>`** — Forward-only pager with a simplified `retry()`.
-- **`PaginationState<Item>`** — Holds `items: List<Item>` and load statuses (`forward`, `backward`, `refresh`).
+- **`PaginationState<Item>`** — Holds `items: List<Item>` and load statuses (`init`, `forward`, `backward`).
+- **`SimplePaginationState<Item>`** — Holds `items: List<Item>` and a single `loadStatus`.
 - **`LoadStatus`** — `Idle`, `Loading`, `Error(cause)`, or `EndReached`.
 - **`Page<Key, Item>`** — A single page result: `items`, `nextKey`, `prevKey`.
 - **`LoadParams<Key>`** — Passed to your load function: `key`, `direction`, `pageSize`.

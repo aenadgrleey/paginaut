@@ -26,7 +26,7 @@ context(scope: LazyStaggeredGridScope)
 fun PaginationState<*>.firstPageLoading(
     content: @Composable LazyStaggeredGridItemScope.() -> Unit,
 ) {
-    if (refresh is LoadStatus.Loading && items.isEmpty()) {
+    if (init is LoadStatus.Loading && items.isEmpty()) {
         scope.item(key = PagerKeys.FIRST_PAGE_LOADING, span = StaggeredGridItemSpan.FullLine) { content() }
     }
 }
@@ -35,7 +35,7 @@ context(scope: LazyStaggeredGridScope)
 fun PaginationState<*>.firstPageError(
     content: @Composable LazyStaggeredGridItemScope.(Throwable) -> Unit,
 ) {
-    val error = refresh as? LoadStatus.Error
+    val error = init as? LoadStatus.Error
     if (error != null && items.isEmpty()) {
         scope.item(key = PagerKeys.FIRST_PAGE_ERROR, span = StaggeredGridItemSpan.FullLine) { content(error.cause) }
     }
@@ -45,7 +45,7 @@ context(scope: LazyStaggeredGridScope)
 fun PaginationState<*>.empty(
     content: @Composable LazyStaggeredGridItemScope.() -> Unit,
 ) {
-    if (items.isEmpty() && refresh is LoadStatus.Idle && forward is LoadStatus.EndReached) {
+    if (items.isEmpty() && init is LoadStatus.Idle && forward is LoadStatus.EndReached) {
         scope.item(key = PagerKeys.EMPTY, span = StaggeredGridItemSpan.FullLine) { content() }
     }
 }
