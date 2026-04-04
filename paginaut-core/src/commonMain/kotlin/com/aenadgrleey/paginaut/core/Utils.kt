@@ -17,4 +17,5 @@ internal fun <Item : Any, Key : Any> SimplePage<Key, Item>.toPage(): Page<Key, I
         items = items,
         nextKey = nextKey,
         prevKey = null,
+        endReached = endReached,
     )

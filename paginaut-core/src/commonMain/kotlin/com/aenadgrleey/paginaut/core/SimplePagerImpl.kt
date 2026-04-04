@@ -56,6 +56,11 @@ internal class SimplePagerImpl<Key : Any, Item : Any>(
         }
     }
 
+    override fun continueLoading() {
+        pager.continueLoading(Direction.Init)
+        pager.continueLoading(Direction.Forward)
+    }
+
     override fun update(block: (List<Item>) -> List<Item>) =
         pager.update { block(it) }
 

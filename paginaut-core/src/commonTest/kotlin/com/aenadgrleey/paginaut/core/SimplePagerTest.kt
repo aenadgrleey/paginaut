@@ -301,7 +301,7 @@ class SimplePagerTest {
             pageSize = 2,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         ) { _ ->
-            SimplePage(items = listOf("only-item"), nextKey = null)
+            SimplePage(items = listOf("only-item"), nextKey = null, endReached = true)
         }
 
         pager.init()
@@ -319,7 +319,7 @@ class SimplePagerTest {
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         ) { _ ->
             loadCount++
-            SimplePage(items = listOf("item-$loadCount"), nextKey = null)
+            SimplePage(items = listOf("item-$loadCount"), nextKey = null, endReached = true)
         }
 
         pager.init()

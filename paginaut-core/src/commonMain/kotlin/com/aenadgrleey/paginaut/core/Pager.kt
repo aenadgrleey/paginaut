@@ -13,6 +13,7 @@ interface Pager<Key : Any, Item : Any> {
     fun refresh(key: Key? = initialKey)
     fun jumpTo(key: Key) = refresh(key)
     fun retry(direction: Direction)
+    fun continueLoading(direction: Direction)
     fun update(block: (List<Item>) -> List<Item>)
     fun close()
 }
@@ -24,6 +25,7 @@ interface SimplePager<Key : Any, Item : Any> {
     fun onVisibleRangeChanged(range: VisibleRange)
     fun refresh(key: Key? = initialKey)
     fun retry()
+    fun continueLoading()
     fun update(block: (List<Item>) -> List<Item>)
     fun close()
 }
@@ -58,7 +60,8 @@ fun <Item : Any> SimpleOffsetPager(
     val items = load(offset ?: 0)
     SimplePage(
         items = items,
-        nextKey = if (items.size < pageSize) null else (offset ?: 0) + items.size,
+        nextKey = (offset ?: 0) + items.size,
+        endReached = items.size < pageSize,
     )
 }
 
@@ -77,6 +80,7 @@ fun <Id : Any, Item : Any> SimpleIdPager(
     val items = load(afterId)
     SimplePage(
         items = items,
-        nextKey = if (items.size < pageSize) null else items.lastOrNull()?.let(idSelector),
+        nextKey = items.lastOrNull()?.let(idSelector),
+        endReached = items.size < pageSize,
     )
 }

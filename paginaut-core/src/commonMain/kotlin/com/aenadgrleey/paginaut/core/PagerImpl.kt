@@ -90,8 +90,24 @@ internal class PagerImpl<Key : Any, Item : Any>(
         }
     }
 
+    override fun continueLoading(direction: Direction) {
+        scope.launch {
+            mutex.withLock {
+                _state.update {
+                    when (direction) {
+                        Direction.Forward -> if (it.forward == LoadStatus.EndReached) it.copy(forward = LoadStatus.Idle) else it
+                        Direction.Backward -> if (it.backward == LoadStatus.EndReached) it.copy(backward = LoadStatus.Idle) else it
+                        Direction.Init -> if (it.init == LoadStatus.EndReached) it.copy(init = LoadStatus.Idle) else it
+                    }
+                }
+            }
+        }
+    }
+
     override fun update(block: (List<Item>) -> List<Item>) {
-        _state.update { it.copy(items = block(it.items)) }
+        scope.launch {
+            mutex.withLock { _state.update { it.copy(items = block(it.items)) } }
+        }
     }
 
     override fun close() = scope.cancel()
@@ -120,27 +136,29 @@ internal class PagerImpl<Key : Any, Item : Any>(
                     }
                     when (direction) {
                         Direction.Init -> {
-                            forwardKey = page.nextKey
-                            backwardKey = page.prevKey
+                            forwardKey = page.nextKey ?: forwardKey
+                            backwardKey = page.prevKey ?: backwardKey
                             current.copy(
                                 items = newItems,
                                 init = LoadStatus.Idle,
-                                forward = if (page.nextKey == null) LoadStatus.EndReached else LoadStatus.Idle,
-                                backward = if (page.prevKey == null) LoadStatus.EndReached else LoadStatus.Idle,
+                                forward = if (page.endReached) LoadStatus.EndReached else LoadStatus.Idle,
+                                backward = if (page.endReached) LoadStatus.EndReached else LoadStatus.Idle,
                             )
                         }
+
                         Direction.Forward -> {
-                            forwardKey = page.nextKey
+                            forwardKey = page.nextKey ?: forwardKey
                             current.copy(
                                 items = newItems,
-                                forward = if (page.nextKey == null) LoadStatus.EndReached else LoadStatus.Idle,
+                                forward = if (page.endReached) LoadStatus.EndReached else LoadStatus.Idle,
                             )
                         }
+
                         Direction.Backward -> {
-                            backwardKey = page.prevKey
+                            backwardKey = page.prevKey ?: backwardKey
                             current.copy(
                                 items = newItems,
-                                backward = if (page.prevKey == null) LoadStatus.EndReached else LoadStatus.Idle,
+                                backward = if (page.endReached) LoadStatus.EndReached else LoadStatus.Idle,
                             )
                         }
                     }

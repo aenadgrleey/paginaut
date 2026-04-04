@@ -22,11 +22,11 @@ data class LoadParams<Key : Any>(
         items: List<Item>,
         nextKey: (Direction) -> Key?,
         prevKey: (Direction) -> Key?,
-        direction: Direction = this.direction,
+        endReached: Boolean = items.isEmpty(),
     ): Page<Key, Item> = when (direction) {
-        Direction.Forward -> Page(items, nextKey = nextKey(direction), prevKey = null)
-        Direction.Backward -> Page(items, nextKey = null, prevKey = prevKey(direction))
-        Direction.Init -> Page(items, nextKey = nextKey(direction), prevKey = prevKey(direction))
+        Direction.Forward -> Page(items, nextKey = nextKey(direction), prevKey = null, endReached = endReached)
+        Direction.Backward -> Page(items, nextKey = null, prevKey = prevKey(direction), endReached = endReached)
+        Direction.Init -> Page(items, nextKey = nextKey(direction), prevKey = prevKey(direction), endReached = endReached)
     }
 }
 
@@ -34,11 +34,13 @@ data class Page<out Key : Any, out Item : Any>(
     val items: List<Item>,
     val nextKey: Key?,
     val prevKey: Key?,
+    val endReached: Boolean = items.isEmpty(),
 )
 
 data class SimplePage<out Key : Any, out Item : Any>(
     val items: List<Item>,
     val nextKey: Key?,
+    val endReached: Boolean = items.isEmpty(),
 )
 
 data class VisibleRange(
