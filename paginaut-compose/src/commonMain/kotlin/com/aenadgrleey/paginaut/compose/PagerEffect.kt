@@ -6,12 +6,12 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
-import com.aenadgrleey.paginaut.core.Pager
+import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.VisibleRange
 
 @Composable
 fun PagerEffect(
-    pager: Pager<*, *>,
+    pager: BidirPager<*, *>,
     listState: LazyListState,
 ) {
     LaunchedEffect(pager, listState) {
@@ -26,7 +26,7 @@ fun PagerEffect(
 
 @Composable
 fun PagerEffect(
-    pager: Pager<*, *>,
+    pager: BidirPager<*, *>,
     gridState: LazyGridState,
 ) {
     LaunchedEffect(pager, gridState) {
@@ -41,7 +41,7 @@ fun PagerEffect(
 
 @Composable
 fun PagerEffect(
-    pager: Pager<*, *>,
+    pager: BidirPager<*, *>,
     staggeredGridState: LazyStaggeredGridState,
 ) {
     LaunchedEffect(pager, staggeredGridState) {

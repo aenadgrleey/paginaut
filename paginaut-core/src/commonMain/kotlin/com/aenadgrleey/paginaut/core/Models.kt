@@ -30,7 +30,8 @@ data class LoadParams<Key : Any>(
     }
 }
 
-data class Page<out Key : Any, out Item : Any>(
+data class Page<out Key : Any, out Item : Any>
+    (
     val items: List<Item>,
     val nextKey: Key?,
     val prevKey: Key?,

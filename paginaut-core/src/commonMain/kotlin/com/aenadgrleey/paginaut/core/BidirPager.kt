@@ -18,32 +18,32 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalAtomicApi::class)
-internal class PagerImpl<Key : Any, Item : Any>(
-    private val pageSize: Int,
-    private val prefetchDistance: Int,
-    override var initialKey: Key?,
-    private val load: suspend (LoadParams<Key>) -> Page<Key, Item>,
+open class BidirPager<Key : Any, Item : Any>(
+    private val pageSize: Int = 20,
+    private val prefetchDistance: Int = 5,
+    var initialKey: Key? = null,
     coroutineContext: CoroutineContext = Dispatchers.Default,
-) : Pager<Key, Item> {
+    private val load: suspend (LoadParams<Key>) -> Page<Key, Item>,
+) {
 
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val mutex = Mutex()
     private val _state = MutableStateFlow(PaginationState<Item>())
     private val initialized = AtomicBoolean(false)
 
-    override val state: StateFlow<PaginationState<Item>> = _state.asStateFlow()
+    val state: StateFlow<PaginationState<Item>> = _state.asStateFlow()
 
     private var forwardKey: Key? = null
     private var backwardKey: Key? = null
     private var forwardJob: Job? = null
     private var backwardJob: Job? = null
 
-    override fun init() {
+    open fun init() {
         if (!initialized.compareAndSet(expectedValue = false, newValue = true)) return
         refresh()
     }
 
-    override fun onVisibleRangeChanged(range: VisibleRange) {
+    open fun onVisibleRangeChanged(range: VisibleRange) {
         init()
         val s = _state.value
         val count = s.items.size
@@ -61,7 +61,7 @@ internal class PagerImpl<Key : Any, Item : Any>(
         }
     }
 
-    override fun refresh(key: Key?) {
+    open fun refresh(key: Key? = initialKey) {
         forwardJob?.cancel()
         backwardJob?.cancel()
         scope.launch {
@@ -75,7 +75,9 @@ internal class PagerImpl<Key : Any, Item : Any>(
         }
     }
 
-    override fun retry(direction: Direction) {
+    open fun jumpTo(key: Key) = refresh(key)
+
+    open fun retry(direction: Direction) {
         scope.launch {
             mutex.withLock {
                 val status = when (direction) {
@@ -88,21 +90,21 @@ internal class PagerImpl<Key : Any, Item : Any>(
         }
     }
 
-    override fun continueForward() {
+    open fun continueForward() {
         scope.launch { mutex.withLock { doLoad(Direction.Forward) } }
     }
 
-    override fun continueBackward() {
+    open fun continueBackward() {
         scope.launch { mutex.withLock { doLoad(Direction.Backward) } }
     }
 
-    override fun update(block: (List<Item>) -> List<Item>) {
+    open fun update(block: (List<Item>) -> List<Item>) {
         scope.launch {
             mutex.withLock { _state.update { it.copy(items = block(it.items)) } }
         }
     }
 
-    override fun close() = scope.cancel()
+    open fun close() = scope.cancel()
 
     private suspend fun doLoad(direction: Direction) {
         val key = when (direction) {

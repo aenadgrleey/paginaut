@@ -24,7 +24,7 @@ class PagerTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val completedDirections = mutableListOf<Direction>()
 
-        val pager = Pager<Int, String>(
+        val pager = BidirPager<Int, String>(
             pageSize = 5,
             prefetchDistance = 2,
             initialKey = 50,
@@ -87,7 +87,7 @@ class PagerTest {
         val forwardGate = CompletableDeferred<Unit>()
         var forwardLoadStarted = 0
 
-        val pager = Pager<Int, String>(
+        val pager = BidirPager<Int, String>(
             pageSize = 5,
             prefetchDistance = 2,
             initialKey = 0,
@@ -148,7 +148,7 @@ class PagerTest {
         val forwardGate = CompletableDeferred<Unit>()
         var forwardCompleted = false
 
-        val pager = Pager<Int, String>(
+        val pager = BidirPager<Int, String>(
             pageSize = 5,
             prefetchDistance = 2,
             initialKey = 0,
@@ -197,7 +197,7 @@ class PagerTest {
     @Test
     fun continueLoading_resumesForwardAfterEndReached() = runTest {
         var loadCount = 0
-        val pager = Pager<Int, String>(
+        val pager = BidirPager<Int, String>(
             pageSize = 3,
             prefetchDistance = 1,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
@@ -236,7 +236,7 @@ class PagerTest {
     fun continueLoading_resumesBackwardAfterEndReached() = runTest {
         var loadCount = 0
         var receivedKey: Int? = null
-        val pager = Pager<Int, String>(
+        val pager = BidirPager<Int, String>(
             pageSize = 3,
             prefetchDistance = 1,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
@@ -278,7 +278,7 @@ class PagerTest {
     @Test
     fun continueLoading_loadsFromAnyNonLoadingState() = runTest {
         var forwardLoadCount = 0
-        val pager = Pager<Int, String>(
+        val pager = BidirPager<Int, String>(
             pageSize = 3,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
         ) { params ->

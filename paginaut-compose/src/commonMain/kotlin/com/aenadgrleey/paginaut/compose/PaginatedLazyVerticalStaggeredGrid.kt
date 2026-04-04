@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aenadgrleey.paginaut.core.LoadStatus
-import com.aenadgrleey.paginaut.core.Pager
+import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.PaginationState
 
 @Composable
@@ -86,7 +86,7 @@ fun <Item : Any> PaginatedLazyVerticalStaggeredGrid(
 
 @Composable
 fun <Key : Any, Item : Any> PaginatedLazyVerticalStaggeredGrid(
-    pager: Pager<Key, Item>,
+    pager: BidirPager<Key, Item>,
     columns: StaggeredGridCells,
     modifier: Modifier = Modifier,
     refreshIndicator: @Composable () -> Unit = {},

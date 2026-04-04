@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aenadgrleey.paginaut.core.LoadStatus
-import com.aenadgrleey.paginaut.core.Pager
+import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.PaginationState
 
 @Composable
@@ -82,7 +82,7 @@ fun <Item : Any> PaginatedLazyColumn(
 
 @Composable
 fun <Key : Any, Item : Any> PaginatedLazyColumn(
-    pager: Pager<Key, Item>,
+    pager: BidirPager<Key, Item>,
     modifier: Modifier = Modifier,
     refreshIndicator: @Composable () -> Unit = {},
     refreshErrorIndicator: @Composable (Throwable) -> Unit = {},
