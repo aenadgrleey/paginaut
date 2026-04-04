@@ -78,30 +78,22 @@ internal class PagerImpl<Key : Any, Item : Any>(
     override fun retry(direction: Direction) {
         scope.launch {
             mutex.withLock {
-                _state.update {
-                    when (direction) {
-                        Direction.Forward -> it.copy(forward = LoadStatus.Loading)
-                        Direction.Backward -> it.copy(backward = LoadStatus.Loading)
-                        Direction.Init -> it.copy(init = LoadStatus.Loading)
-                    }
+                val status = when (direction) {
+                    Direction.Forward -> _state.value.forward
+                    Direction.Backward -> _state.value.backward
+                    Direction.Init -> _state.value.init
                 }
-                doLoad(direction)
+                if (status is LoadStatus.Error) doLoad(direction)
             }
         }
     }
 
-    override fun continueLoading(direction: Direction) {
-        scope.launch {
-            mutex.withLock {
-                _state.update {
-                    when (direction) {
-                        Direction.Forward -> if (it.forward == LoadStatus.EndReached) it.copy(forward = LoadStatus.Idle) else it
-                        Direction.Backward -> if (it.backward == LoadStatus.EndReached) it.copy(backward = LoadStatus.Idle) else it
-                        Direction.Init -> if (it.init == LoadStatus.EndReached) it.copy(init = LoadStatus.Idle) else it
-                    }
-                }
-            }
-        }
+    override fun continueForward() {
+        scope.launch { mutex.withLock { doLoad(Direction.Forward) } }
+    }
+
+    override fun continueBackward() {
+        scope.launch { mutex.withLock { doLoad(Direction.Backward) } }
     }
 
     override fun update(block: (List<Item>) -> List<Item>) {

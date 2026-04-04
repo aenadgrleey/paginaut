@@ -361,8 +361,7 @@ class SimplePagerTest {
         assertEquals(LoadStatus.EndReached, pager.state.value.loadStatus)
 
         // Resume loading — should use preserved key
-        pager.continueLoading()
-        pager.onVisibleRangeChanged(VisibleRange(firstVisible = 0, lastVisible = 1))
+        pager.continueForward()
         advanceUntilIdle()
 
         assertEquals(2, loadCount)
@@ -370,7 +369,7 @@ class SimplePagerTest {
     }
 
     @Test
-    fun continueLoading_noOpWhenNotEndReached() = runTest {
+    fun continueLoading_loadsFromAnyNonLoadingState() = runTest {
         var loadCount = 0
         val pager = SimplePager<Int, String>(
             pageSize = 2,
@@ -382,13 +381,13 @@ class SimplePagerTest {
 
         pager.init()
         advanceUntilIdle()
-        assertEquals(LoadStatus.Idle, pager.state.value.loadStatus)
+        assertEquals(1, loadCount)
 
-        // continueLoading on Idle should be a no-op
-        pager.continueLoading()
+        // continueLoading on Idle triggers a load
+        pager.continueForward()
         advanceUntilIdle()
 
-        assertEquals(LoadStatus.Idle, pager.state.value.loadStatus)
+        assertEquals(2, loadCount)
     }
 
     @Test
@@ -409,8 +408,7 @@ class SimplePagerTest {
         advanceUntilIdle()
         assertEquals(1, loadCount)
 
-        pager.continueLoading()
-        pager.onVisibleRangeChanged(VisibleRange(firstVisible = 0, lastVisible = 0))
+        pager.continueForward()
         advanceUntilIdle()
 
         assertEquals(2, loadCount)

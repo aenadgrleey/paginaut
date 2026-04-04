@@ -225,8 +225,7 @@ class PagerTest {
         assertEquals(1, loadCount)
         assertEquals(LoadStatus.EndReached, pager.state.value.forward)
 
-        pager.continueLoading(Direction.Forward)
-        pager.onVisibleRangeChanged(VisibleRange(firstVisible = 0, lastVisible = 2))
+        pager.continueForward()
         advanceUntilIdle()
 
         assertEquals(2, loadCount)
@@ -268,8 +267,7 @@ class PagerTest {
         assertEquals(1, loadCount)
         assertEquals(LoadStatus.EndReached, pager.state.value.backward)
 
-        pager.continueLoading(Direction.Backward)
-        pager.onVisibleRangeChanged(VisibleRange(firstVisible = 0, lastVisible = 0))
+        pager.continueBackward()
         advanceUntilIdle()
 
         assertEquals(2, loadCount)
@@ -278,7 +276,8 @@ class PagerTest {
     }
 
     @Test
-    fun continueLoading_noOpWhenNotEndReached() = runTest {
+    fun continueLoading_loadsFromAnyNonLoadingState() = runTest {
+        var forwardLoadCount = 0
         val pager = Pager<Int, String>(
             pageSize = 3,
             coroutineContext = UnconfinedTestDispatcher(testScheduler),
@@ -289,6 +288,10 @@ class PagerTest {
                     nextKey = 10,
                     prevKey = null,
                 )
+                Direction.Forward -> {
+                    forwardLoadCount++
+                    Page(items = listOf("d"), nextKey = 11, prevKey = null)
+                }
                 else -> Page(items = emptyList(), nextKey = null, prevKey = null)
             }
         }
@@ -297,10 +300,10 @@ class PagerTest {
         advanceUntilIdle()
         assertEquals(LoadStatus.Idle, pager.state.value.forward)
 
-        pager.continueLoading(Direction.Forward)
+        pager.continueForward()
         advanceUntilIdle()
 
-        // Should remain Idle, not change
-        assertEquals(LoadStatus.Idle, pager.state.value.forward)
+        assertEquals(1, forwardLoadCount)
+        assertEquals(4, pager.state.value.items.size)
     }
 }

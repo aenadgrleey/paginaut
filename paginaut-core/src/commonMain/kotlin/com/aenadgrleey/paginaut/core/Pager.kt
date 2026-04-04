@@ -13,7 +13,8 @@ interface Pager<Key : Any, Item : Any> {
     fun refresh(key: Key? = initialKey)
     fun jumpTo(key: Key) = refresh(key)
     fun retry(direction: Direction)
-    fun continueLoading(direction: Direction)
+    fun continueForward()
+    fun continueBackward()
     fun update(block: (List<Item>) -> List<Item>)
     fun close()
 }
@@ -25,7 +26,7 @@ interface SimplePager<Key : Any, Item : Any> {
     fun onVisibleRangeChanged(range: VisibleRange)
     fun refresh(key: Key? = initialKey)
     fun retry()
-    fun continueLoading()
+    fun continueForward()
     fun update(block: (List<Item>) -> List<Item>)
     fun close()
 }

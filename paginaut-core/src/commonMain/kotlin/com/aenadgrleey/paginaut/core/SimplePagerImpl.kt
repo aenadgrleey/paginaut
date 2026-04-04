@@ -49,17 +49,11 @@ internal class SimplePagerImpl<Key : Any, Item : Any>(
     override fun refresh(key: Key?) = pager.refresh(key)
 
     override fun retry() {
-        val s = pager.state.value
-        when {
-            s.forward is LoadStatus.Error -> pager.retry(Direction.Forward)
-            s.init is LoadStatus.Error -> pager.retry(Direction.Init)
-        }
+        pager.retry(Direction.Init)
+        pager.retry(Direction.Forward)
     }
 
-    override fun continueLoading() {
-        pager.continueLoading(Direction.Init)
-        pager.continueLoading(Direction.Forward)
-    }
+    override fun continueForward() = pager.continueForward()
 
     override fun update(block: (List<Item>) -> List<Item>) =
         pager.update { block(it) }
