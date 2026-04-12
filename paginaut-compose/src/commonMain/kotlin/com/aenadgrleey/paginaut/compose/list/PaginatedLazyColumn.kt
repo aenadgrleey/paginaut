@@ -4,9 +4,9 @@ import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -18,15 +18,15 @@ import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.PaginationState
 
 @Composable
-fun <Item : Any> PaginatedLazyRow(
+fun <Item : Any> PaginatedLazyColumn(
     paginationState: PaginationState<Item>,
     modifier: Modifier = Modifier,
     indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
-    horizontalArrangement: Arrangement.Horizontal = if (!reverseLayout) Arrangement.Start else Arrangement.End,
-    verticalAlignment: Alignment.Vertical = Alignment.Top,
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
     key: ((Item) -> Any)? = null,
@@ -35,19 +35,19 @@ fun <Item : Any> PaginatedLazyRow(
 ) {
     val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
 
-    LazyRow(
+    LazyColumn(
         modifier = modifier,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
-        horizontalArrangement = horizontalArrangement,
-        verticalAlignment = verticalAlignment,
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
     ) {
-        paginationState.firstPageLoading { indicatorConfig.init.loading() }
-        paginationState.firstPageError { indicatorConfig.init.error(it) }
-        paginationState.firstPageEmpty { indicatorConfig.init.empty() }
+        paginationState.initLoading { indicatorConfig.init.loading() }
+        paginationState.initError { indicatorConfig.init.error(it) }
+        paginationState.initEmpty { indicatorConfig.init.empty() }
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
         paginationState.backwardError { indicatorConfig.backward.error(it) }
         paginationState.backwardEndReached { indicatorConfig.backward.empty() }
@@ -59,15 +59,15 @@ fun <Item : Any> PaginatedLazyRow(
 }
 
 @Composable
-fun <Key : Any, Item : Any> PaginatedLazyRow(
+fun <Key : Any, Item : Any> PaginatedLazyColumn(
     pager: BidirPager<Key, Item>,
     modifier: Modifier = Modifier,
     indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
-    horizontalArrangement: Arrangement.Horizontal = if (!reverseLayout) Arrangement.Start else Arrangement.End,
-    verticalAlignment: Alignment.Vertical = Alignment.Top,
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
     key: ((Item) -> Any)? = null,
@@ -78,15 +78,15 @@ fun <Key : Any, Item : Any> PaginatedLazyRow(
 
     PagerEffect(pager, state)
 
-    PaginatedLazyRow(
+    PaginatedLazyColumn(
         paginationState = paginationState,
         modifier = modifier,
         indicators = indicators,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
-        horizontalArrangement = horizontalArrangement,
-        verticalAlignment = verticalAlignment,
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
         key = key,
@@ -96,15 +96,15 @@ fun <Key : Any, Item : Any> PaginatedLazyRow(
 }
 
 @Composable
-fun <Item : Any, GroupKey : Any> PaginatedLazyRow(
+fun <Item : Any, GroupKey : Any> PaginatedLazyColumn(
     paginationState: PaginationState<Item>,
     modifier: Modifier = Modifier,
     indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
-    horizontalArrangement: Arrangement.Horizontal = if (!reverseLayout) Arrangement.Start else Arrangement.End,
-    verticalAlignment: Alignment.Vertical = Alignment.Top,
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
     grouping: GroupedItemsDsl<Item, GroupKey>.() -> Unit,
@@ -112,19 +112,19 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyRow(
 ) {
     val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
 
-    LazyRow(
+    LazyColumn(
         modifier = modifier,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
-        horizontalArrangement = horizontalArrangement,
-        verticalAlignment = verticalAlignment,
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
     ) {
-        paginationState.firstPageLoading { indicatorConfig.init.loading() }
-        paginationState.firstPageError { indicatorConfig.init.error(it) }
-        paginationState.firstPageEmpty { indicatorConfig.init.empty() }
+        paginationState.initLoading { indicatorConfig.init.loading() }
+        paginationState.initError { indicatorConfig.init.error(it) }
+        paginationState.initEmpty { indicatorConfig.init.empty() }
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
         paginationState.backwardError { indicatorConfig.backward.error(it) }
         paginationState.backwardEndReached { indicatorConfig.backward.empty() }
@@ -139,15 +139,15 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyRow(
 }
 
 @Composable
-fun <Key : Any, Item : Any, GroupKey : Any> PaginatedLazyRow(
+fun <Key : Any, Item : Any, GroupKey : Any> PaginatedLazyColumn(
     pager: BidirPager<Key, Item>,
     modifier: Modifier = Modifier,
     indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
-    horizontalArrangement: Arrangement.Horizontal = if (!reverseLayout) Arrangement.Start else Arrangement.End,
-    verticalAlignment: Alignment.Vertical = Alignment.Top,
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
     grouping: GroupedItemsDsl<Item, GroupKey>.() -> Unit,
@@ -157,15 +157,15 @@ fun <Key : Any, Item : Any, GroupKey : Any> PaginatedLazyRow(
 
     PagerEffect(pager, state)
 
-    PaginatedLazyRow(
+    PaginatedLazyColumn(
         paginationState = paginationState,
         modifier = modifier,
         indicators = indicators,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
-        horizontalArrangement = horizontalArrangement,
-        verticalAlignment = verticalAlignment,
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
         grouping = grouping,

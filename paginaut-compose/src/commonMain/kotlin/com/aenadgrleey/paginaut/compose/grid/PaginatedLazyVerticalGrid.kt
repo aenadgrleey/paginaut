@@ -48,9 +48,9 @@ fun <Item : Any> PaginatedLazyVerticalGrid(
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
     ) {
-        paginationState.firstPageLoading { indicatorConfig.init.loading() }
-        paginationState.firstPageError { indicatorConfig.init.error(it) }
-        paginationState.firstPageEmpty { indicatorConfig.init.empty() }
+        paginationState.initLoading { indicatorConfig.init.loading() }
+        paginationState.initError { indicatorConfig.init.error(it) }
+        paginationState.initEmpty { indicatorConfig.init.empty() }
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
         paginationState.backwardError { indicatorConfig.backward.error(it) }
         paginationState.backwardEndReached { indicatorConfig.backward.empty() }
