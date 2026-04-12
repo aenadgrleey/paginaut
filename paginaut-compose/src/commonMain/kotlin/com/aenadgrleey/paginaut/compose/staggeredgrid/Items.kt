@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.staggeredgrid
 
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridItemScope
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope

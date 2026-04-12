@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.list
 
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
@@ -16,12 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.PaginationState
+import com.aenadgrleey.paginaut.compose.shared.IndicatorsScope
+import com.aenadgrleey.paginaut.compose.shared.PagerEffect
 
 @Composable
 fun <Item : Any> PaginatedLazyColumn(
     paginationState: PaginationState<Item>,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -29,11 +30,14 @@ fun <Item : Any> PaginatedLazyColumn(
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
+    indicators: IndicatorsScope.() -> Unit = {},
+    externals: ExternalItemsScope<Item>.() -> Unit = {},
     key: ((Item) -> Any)? = null,
     contentType: (Item) -> Any? = { null },
     itemContent: @Composable LazyItemScope.(Item) -> Unit,
 ) {
-    val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
+    val indicatorConfig = IndicatorsScope().apply(indicators)
+    val externalConfig = ExternalItemsScope<Item>().apply(externals)
 
     LazyColumn(
         modifier = modifier,
@@ -55,6 +59,7 @@ fun <Item : Any> PaginatedLazyColumn(
         }
         paginationState.initError { indicatorConfig.init.error(it) }
         paginationState.initEmpty { indicatorConfig.init.empty() }
+        paginationState.backwardExternalItems { externalConfig.backwardExternal?.invoke(this, it) }
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
         paginationState.backwardError { indicatorConfig.backward.error(it) }
         paginationState.backwardEndReached { indicatorConfig.backward.empty() }
@@ -62,6 +67,7 @@ fun <Item : Any> PaginatedLazyColumn(
         paginationState.forwardLoading { indicatorConfig.forward.loading() }
         paginationState.forwardError { indicatorConfig.forward.error(it) }
         paginationState.forwardEndReached { indicatorConfig.forward.empty() }
+        paginationState.forwardExternalItems { externalConfig.forwardExternal?.invoke(this, it) }
     }
 }
 
@@ -69,7 +75,6 @@ fun <Item : Any> PaginatedLazyColumn(
 fun <Key : Any, Item : Any> PaginatedLazyColumn(
     pager: BidirPager<Key, Item>,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -77,6 +82,8 @@ fun <Key : Any, Item : Any> PaginatedLazyColumn(
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
+    indicators: IndicatorsScope.() -> Unit = {},
+    externals: ExternalItemsScope<Item>.() -> Unit = {},
     key: ((Item) -> Any)? = null,
     contentType: (Item) -> Any? = { null },
     itemContent: @Composable LazyItemScope.(Item) -> Unit,
@@ -89,6 +96,7 @@ fun <Key : Any, Item : Any> PaginatedLazyColumn(
         paginationState = paginationState,
         modifier = modifier,
         indicators = indicators,
+        externals = externals,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
@@ -106,7 +114,6 @@ fun <Key : Any, Item : Any> PaginatedLazyColumn(
 fun <Item : Any, GroupKey : Any> PaginatedLazyColumn(
     paginationState: PaginationState<Item>,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -114,10 +121,13 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyColumn(
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
+    indicators: IndicatorsScope.() -> Unit = {},
+    externals: ExternalItemsScope<Item>.() -> Unit = {},
     grouping: GroupedItemsDsl<Item, GroupKey>.() -> Unit,
     itemContent: @Composable LazyItemScope.(Item) -> Unit,
 ) {
-    val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
+    val indicatorConfig = IndicatorsScope().apply(indicators)
+    val externalConfig = ExternalItemsScope<Item>().apply(externals)
 
     LazyColumn(
         modifier = modifier,
@@ -139,6 +149,7 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyColumn(
         }
         paginationState.initError { indicatorConfig.init.error(it) }
         paginationState.initEmpty { indicatorConfig.init.empty() }
+        paginationState.backwardExternalItems { externalConfig.backwardExternal?.invoke(this, it) }
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
         paginationState.backwardError { indicatorConfig.backward.error(it) }
         paginationState.backwardEndReached { indicatorConfig.backward.empty() }
@@ -149,6 +160,7 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyColumn(
         paginationState.forwardLoading { indicatorConfig.forward.loading() }
         paginationState.forwardError { indicatorConfig.forward.error(it) }
         paginationState.forwardEndReached { indicatorConfig.forward.empty() }
+        paginationState.forwardExternalItems { externalConfig.forwardExternal?.invoke(this, it) }
     }
 }
 
@@ -156,7 +168,6 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyColumn(
 fun <Key : Any, Item : Any, GroupKey : Any> PaginatedLazyColumn(
     pager: BidirPager<Key, Item>,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -164,6 +175,8 @@ fun <Key : Any, Item : Any, GroupKey : Any> PaginatedLazyColumn(
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
+    indicators: IndicatorsScope.() -> Unit = {},
+    externals: ExternalItemsScope<Item>.() -> Unit = {},
     grouping: GroupedItemsDsl<Item, GroupKey>.() -> Unit,
     itemContent: @Composable LazyItemScope.(Item) -> Unit,
 ) {
@@ -175,6 +188,7 @@ fun <Key : Any, Item : Any, GroupKey : Any> PaginatedLazyColumn(
         paginationState = paginationState,
         modifier = modifier,
         indicators = indicators,
+        externals = externals,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,

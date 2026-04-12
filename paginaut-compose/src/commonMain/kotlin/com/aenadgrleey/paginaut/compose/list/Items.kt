@@ -1,9 +1,11 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.list
 
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
+import com.aenadgrleey.paginaut.core.LoadStatus
 import com.aenadgrleey.paginaut.core.PaginationState
+import com.aenadgrleey.paginaut.compose.shared.PagerKeys
 
 context(scope: LazyListScope)
 fun <Item : Any> PaginationState<Item>.items(
@@ -58,6 +60,19 @@ class GroupedItemsDsl<Item : Any, GroupKey : Any> internal constructor() {
         groupEndFn = content
     }
 
+}
+
+class ExternalItemsScope<Item : Any> internal constructor() {
+    internal var backwardExternal: (LazyListScope.(LoadStatus) -> Unit)? = null
+    internal var forwardExternal: (LazyListScope.(LoadStatus) -> Unit)? = null
+
+    fun backwardExternal(content: LazyListScope.(LoadStatus) -> Unit) {
+        backwardExternal = content
+    }
+
+    fun forwardExternal(content: LazyListScope.(LoadStatus) -> Unit) {
+        forwardExternal = content
+    }
 }
 
 context(scope: LazyListScope)
@@ -121,5 +136,23 @@ fun <Item : Any, GroupKey : Any> PaginationState<Item>.groupedItems(
                 it(groupKey, item)
             }
         }
+    }
+}
+
+context(scope: LazyListScope)
+internal fun PaginationState<*>.forwardExternalItems(
+    block: LazyListScope.(LoadStatus) -> Unit,
+) {
+    if (this.init is LoadStatus.Idle || this.init is LoadStatus.EndReached) {
+        block(scope, this.forward)
+    }
+}
+
+context(scope: LazyListScope)
+internal fun PaginationState<*>.backwardExternalItems(
+    block: LazyListScope.(LoadStatus) -> Unit,
+) {
+    if (this.init is LoadStatus.Idle || this.init is LoadStatus.EndReached) {
+        block(scope, this.backward)
     }
 }

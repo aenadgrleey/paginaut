@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.grid
 
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope

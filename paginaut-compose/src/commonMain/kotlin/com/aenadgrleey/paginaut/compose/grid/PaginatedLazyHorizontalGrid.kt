@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.grid
 
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
@@ -12,18 +12,19 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.PaginationState
+import com.aenadgrleey.paginaut.compose.shared.IndicatorsScope
+import com.aenadgrleey.paginaut.compose.shared.PagerEffect
 
 @Composable
 fun <Item : Any> PaginatedLazyHorizontalGrid(
     paginationState: PaginationState<Item>,
     rows: GridCells,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
+    indicators: IndicatorsScope.() -> Unit = {},
     state: LazyGridState = rememberLazyGridState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -35,7 +36,7 @@ fun <Item : Any> PaginatedLazyHorizontalGrid(
     contentType: (Item) -> Any? = { null },
     itemContent: @Composable LazyGridItemScope.(Item) -> Unit,
 ) {
-    val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
+    val indicatorConfig = IndicatorsScope().apply(indicators)
 
     LazyHorizontalGrid(
         rows = rows,
@@ -66,7 +67,7 @@ fun <Key : Any, Item : Any> PaginatedLazyHorizontalGrid(
     pager: BidirPager<Key, Item>,
     rows: GridCells,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
+    indicators: IndicatorsScope.() -> Unit = {},
     state: LazyGridState = rememberLazyGridState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,

@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.grid
 
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.runtime.Composable
 import com.aenadgrleey.paginaut.core.LoadStatus
 import com.aenadgrleey.paginaut.core.PaginationState
+import com.aenadgrleey.paginaut.compose.shared.PagerKeys
 
 context(scope: LazyGridScope)
 fun PaginationState<*>.backwardLoading(

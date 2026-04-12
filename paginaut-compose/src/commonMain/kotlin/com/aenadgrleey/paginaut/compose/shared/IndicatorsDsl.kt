@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.shared
 
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.runtime.Composable
@@ -21,7 +21,7 @@ open class StateIndicatorScope {
     }
 }
 
-class InitStateIndicatorScope : StateIndicatorScope() {
+class InitStateIndicatorScope internal constructor() : StateIndicatorScope() {
     internal var placeholderCount: Int = 0
     internal var placeholderContent: @Composable LazyItemScope.(Int) -> Unit = { _ -> }
 
@@ -36,32 +36,20 @@ class InitStateIndicatorScope : StateIndicatorScope() {
     }
 }
 
-class PaginationIndicatorsScope internal constructor() {
-    val initStateIndicator = InitStateIndicatorScope()
-    val forwardStateIndicator = StateIndicatorScope()
-    val backwardStateIndicator = StateIndicatorScope()
+class IndicatorsScope internal constructor() {
+    internal val init = InitStateIndicatorScope()
+    internal val forward = StateIndicatorScope()
+    internal val backward = StateIndicatorScope()
 
     fun initStateIndicator(block: InitStateIndicatorScope.() -> Unit) {
-        initStateIndicator.apply(block)
+        init.apply(block)
     }
 
     fun forwardStateIndicator(block: StateIndicatorScope.() -> Unit) {
-        forwardStateIndicator.apply(block)
+        forward.apply(block)
     }
 
     fun backwardStateIndicator(block: StateIndicatorScope.() -> Unit) {
-        backwardStateIndicator.apply(block)
+        backward.apply(block)
     }
-
-    internal fun build(): PaginationIndicators = PaginationIndicators(
-        init = initStateIndicator,
-        forward = forwardStateIndicator,
-        backward = backwardStateIndicator,
-    )
 }
-
-internal data class PaginationIndicators(
-    val init: InitStateIndicatorScope,
-    val forward: StateIndicatorScope,
-    val backward: StateIndicatorScope,
-)

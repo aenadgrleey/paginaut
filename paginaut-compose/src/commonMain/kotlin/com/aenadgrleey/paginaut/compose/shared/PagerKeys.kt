@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.shared
 
 internal object PagerKeys {
     const val INIT_LOADING = "pager_init_loading"

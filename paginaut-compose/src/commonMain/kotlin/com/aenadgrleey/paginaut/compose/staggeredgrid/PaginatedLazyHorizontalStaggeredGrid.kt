@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.staggeredgrid
 
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
@@ -12,19 +12,20 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.PaginationState
+import com.aenadgrleey.paginaut.compose.shared.IndicatorsScope
+import com.aenadgrleey.paginaut.compose.shared.PagerEffect
 
 @Composable
 fun <Item : Any> PaginatedLazyHorizontalStaggeredGrid(
     paginationState: PaginationState<Item>,
     rows: StaggeredGridCells,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
+    indicators: IndicatorsScope.() -> Unit = {},
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -36,7 +37,7 @@ fun <Item : Any> PaginatedLazyHorizontalStaggeredGrid(
     contentType: (Item) -> Any? = { null },
     itemContent: @Composable LazyStaggeredGridItemScope.(Item) -> Unit,
 ) {
-    val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
+    val indicatorConfig = IndicatorsScope().apply(indicators)
 
     LazyHorizontalStaggeredGrid(
         rows = rows,
@@ -67,7 +68,7 @@ fun <Key : Any, Item : Any> PaginatedLazyHorizontalStaggeredGrid(
     pager: BidirPager<Key, Item>,
     rows: StaggeredGridCells,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
+    indicators: IndicatorsScope.() -> Unit = {},
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,

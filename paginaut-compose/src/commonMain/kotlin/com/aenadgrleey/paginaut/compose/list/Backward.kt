@@ -1,10 +1,11 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.list
 
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import com.aenadgrleey.paginaut.core.LoadStatus
 import com.aenadgrleey.paginaut.core.PaginationState
+import com.aenadgrleey.paginaut.compose.shared.PagerKeys
 
 context(scope: LazyListScope)
 fun PaginationState<*>.backwardLoading(

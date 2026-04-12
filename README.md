@@ -158,6 +158,18 @@ fun ItemList(pager: Pager<Int, Item>) {
                 error { _ -> Text("Load failed") }
             }
         },
+        externals = {
+            backwardExternal { state ->
+                if (state.init is LoadStatus.Idle) {
+                    item { Text("Pinned section") }
+                }
+            }
+            forwardExternal { state ->
+                if (state.forward is LoadStatus.EndReached) {
+                    item { Text("Suggested follow-up") }
+                }
+            }
+        },
     ) { item ->
         ItemRow(item)
     }

@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.shared
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable

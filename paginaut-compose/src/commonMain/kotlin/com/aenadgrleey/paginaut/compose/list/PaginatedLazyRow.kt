@@ -1,4 +1,4 @@
-package com.aenadgrleey.paginaut.compose
+package com.aenadgrleey.paginaut.compose.list
 
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
@@ -16,12 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.PaginationState
+import com.aenadgrleey.paginaut.compose.shared.IndicatorsScope
+import com.aenadgrleey.paginaut.compose.shared.PagerEffect
 
 @Composable
 fun <Item : Any> PaginatedLazyRow(
     paginationState: PaginationState<Item>,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
+    indicators: IndicatorsScope.() -> Unit = {},
+    externals: ExternalItemsScope<Item>.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -33,7 +36,8 @@ fun <Item : Any> PaginatedLazyRow(
     contentType: (Item) -> Any? = { null },
     itemContent: @Composable LazyItemScope.(Item) -> Unit,
 ) {
-    val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
+    val indicatorConfig = IndicatorsScope().apply(indicators)
+    val externalConfig = ExternalItemsScope<Item>().apply(externals)
 
     LazyRow(
         modifier = modifier,
@@ -58,7 +62,9 @@ fun <Item : Any> PaginatedLazyRow(
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
         paginationState.backwardError { indicatorConfig.backward.error(it) }
         paginationState.backwardEndReached { indicatorConfig.backward.empty() }
+        paginationState.backwardExternalItems { externalConfig.backwardExternal?.invoke(this, it) }
         paginationState.items(key, contentType, itemContent)
+        paginationState.forwardExternalItems { externalConfig.forwardExternal?.invoke(this, it) }
         paginationState.forwardLoading { indicatorConfig.forward.loading() }
         paginationState.forwardError { indicatorConfig.forward.error(it) }
         paginationState.forwardEndReached { indicatorConfig.forward.empty() }
@@ -69,7 +75,8 @@ fun <Item : Any> PaginatedLazyRow(
 fun <Key : Any, Item : Any> PaginatedLazyRow(
     pager: BidirPager<Key, Item>,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
+    indicators: IndicatorsScope.() -> Unit = {},
+    externals: ExternalItemsScope<Item>.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -89,6 +96,7 @@ fun <Key : Any, Item : Any> PaginatedLazyRow(
         paginationState = paginationState,
         modifier = modifier,
         indicators = indicators,
+        externals = externals,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
@@ -106,7 +114,8 @@ fun <Key : Any, Item : Any> PaginatedLazyRow(
 fun <Item : Any, GroupKey : Any> PaginatedLazyRow(
     paginationState: PaginationState<Item>,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
+    indicators: IndicatorsScope.() -> Unit = {},
+    externals: ExternalItemsScope<Item>.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -117,7 +126,8 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyRow(
     grouping: GroupedItemsDsl<Item, GroupKey>.() -> Unit,
     itemContent: @Composable LazyItemScope.(Item) -> Unit,
 ) {
-    val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
+    val indicatorConfig = IndicatorsScope().apply(indicators)
+    val externalConfig = ExternalItemsScope<Item>().apply(externals)
 
     LazyRow(
         modifier = modifier,
@@ -142,10 +152,12 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyRow(
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
         paginationState.backwardError { indicatorConfig.backward.error(it) }
         paginationState.backwardEndReached { indicatorConfig.backward.empty() }
+        paginationState.backwardExternalItems { externalConfig.backwardExternal?.invoke(this, it) }
         paginationState.groupedItems(
             grouping = grouping,
             itemContent = itemContent,
         )
+        paginationState.forwardExternalItems { externalConfig.forwardExternal?.invoke(this, it) }
         paginationState.forwardLoading { indicatorConfig.forward.loading() }
         paginationState.forwardError { indicatorConfig.forward.error(it) }
         paginationState.forwardEndReached { indicatorConfig.forward.empty() }
@@ -156,7 +168,8 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyRow(
 fun <Key : Any, Item : Any, GroupKey : Any> PaginatedLazyRow(
     pager: BidirPager<Key, Item>,
     modifier: Modifier = Modifier,
-    indicators: PaginationIndicatorsScope.() -> Unit = {},
+    indicators: IndicatorsScope.() -> Unit = {},
+    externals: ExternalItemsScope<Item>.() -> Unit = {},
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -175,6 +188,7 @@ fun <Key : Any, Item : Any, GroupKey : Any> PaginatedLazyRow(
         paginationState = paginationState,
         modifier = modifier,
         indicators = indicators,
+        externals = externals,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
