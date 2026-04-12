@@ -45,7 +45,14 @@ fun <Item : Any> PaginatedLazyRow(
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
     ) {
-        paginationState.initLoading { indicatorConfig.init.loading() }
+        if (indicatorConfig.init.shouldShowPlaceholders()) {
+            paginationState.placeholders(
+                count = indicatorConfig.init.placeholderCount,
+                content = indicatorConfig.init.placeholderContent,
+            )
+        } else {
+            paginationState.initLoading { indicatorConfig.init.loading() }
+        }
         paginationState.initError { indicatorConfig.init.error(it) }
         paginationState.initEmpty { indicatorConfig.init.empty() }
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
@@ -122,7 +129,14 @@ fun <Item : Any, GroupKey : Any> PaginatedLazyRow(
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
     ) {
-        paginationState.initLoading { indicatorConfig.init.loading() }
+        if (indicatorConfig.init.shouldShowPlaceholders()) {
+            paginationState.placeholders(
+                count = indicatorConfig.init.placeholderCount,
+                content = indicatorConfig.init.placeholderContent,
+            )
+        } else {
+            paginationState.initLoading { indicatorConfig.init.loading() }
+        }
         paginationState.initError { indicatorConfig.init.error(it) }
         paginationState.initEmpty { indicatorConfig.init.empty() }
         paginationState.backwardLoading { indicatorConfig.backward.loading() }

@@ -1,8 +1,9 @@
 package com.aenadgrleey.paginaut.compose
 
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.runtime.Composable
 
-class StateIndicatorScope {
+open class StateIndicatorScope {
     internal var loading: @Composable () -> Unit = {}
     internal var error: @Composable (Throwable) -> Unit = {}
     internal var empty: @Composable () -> Unit = {}
@@ -20,12 +21,27 @@ class StateIndicatorScope {
     }
 }
 
+class InitStateIndicatorScope : StateIndicatorScope() {
+    internal var placeholderCount: Int = 0
+    internal var placeholderContent: @Composable LazyItemScope.(Int) -> Unit = { _ -> }
+
+    fun shouldShowPlaceholders(): Boolean = placeholderCount > 0
+
+    fun placeholders(
+        count: Int,
+        content: @Composable LazyItemScope.(Int) -> Unit,
+    ) {
+        placeholderCount = count
+        placeholderContent = content
+    }
+}
+
 class PaginationIndicatorsScope internal constructor() {
-    val initStateIndicator = StateIndicatorScope()
+    val initStateIndicator = InitStateIndicatorScope()
     val forwardStateIndicator = StateIndicatorScope()
     val backwardStateIndicator = StateIndicatorScope()
 
-    fun initStateIndicator(block: StateIndicatorScope.() -> Unit) {
+    fun initStateIndicator(block: InitStateIndicatorScope.() -> Unit) {
         initStateIndicator.apply(block)
     }
 
@@ -45,7 +61,7 @@ class PaginationIndicatorsScope internal constructor() {
 }
 
 internal data class PaginationIndicators(
-    val init: StateIndicatorScope,
+    val init: InitStateIndicatorScope,
     val forward: StateIndicatorScope,
     val backward: StateIndicatorScope,
 )

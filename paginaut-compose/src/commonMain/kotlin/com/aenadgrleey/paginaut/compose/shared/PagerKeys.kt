@@ -2,6 +2,7 @@ package com.aenadgrleey.paginaut.compose
 
 internal object PagerKeys {
     const val INIT_LOADING = "pager_init_loading"
+    const val INIT_PLACEHOLDER = "pager_init_placeholder"
     const val INIT_ERROR = "pager_init_error"
     const val INIT_EMPTY = "pager_init_empty"
     const val BACKWARD_LOADING = "pager_backward_loading"

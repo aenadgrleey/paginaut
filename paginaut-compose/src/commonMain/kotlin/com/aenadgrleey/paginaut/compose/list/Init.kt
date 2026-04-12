@@ -7,6 +7,20 @@ import com.aenadgrleey.paginaut.core.LoadStatus
 import com.aenadgrleey.paginaut.core.PaginationState
 
 context(scope: LazyListScope)
+internal fun PaginationState<*>.placeholders(
+    count: Int,
+    content: @Composable LazyItemScope.(Int) -> Unit,
+) {
+    if (init is LoadStatus.Loading && items.isEmpty()) {
+        repeat(count) { index ->
+            scope.item(key = "${PagerKeys.INIT_PLACEHOLDER}_$index") {
+                content.invoke(this, index)
+            }
+        }
+    }
+}
+
+context(scope: LazyListScope)
 fun PaginationState<*>.initLoading(
     viewport: ListViewportState? = null,
     content: @Composable LazyItemScope.() -> Unit,

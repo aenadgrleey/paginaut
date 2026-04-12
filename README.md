@@ -142,6 +142,9 @@ fun ItemList(pager: Pager<Int, Item>) {
         pager = pager,
         indicators = {
             initStateIndicator {
+                placeholders(count = 6) { index ->
+                    ItemSkeletonRow(index = index)
+                }
                 loading { CircularProgressIndicator() }
                 error { error -> Text("Error: ${error.message}") }
                 empty { Text("No items") }
