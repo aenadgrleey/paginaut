@@ -1,0 +1,72 @@
+name: Auto Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run core all-platform tests
+        run: ./gradlew :paginaut-core:allTests --stacktrace
+
+      - name: Build all modules
+        run: ./gradlew build --stacktrace
+
+      - name: Generate release metadata
+        id: meta
+        shell: bash
+        run: |
+          latest_tag="$(git tag -l 'v*.*.*' --sort=-version:refname | head -n 1)"
+
+          if [[ -z "$latest_tag" ]]; then
+            tag="v0.0.1"
+          else
+            version="${latest_tag#v}"
+            IFS='.' read -r major minor patch <<< "$version"
+            if [[ -z "$major" || -z "$minor" || -z "$patch" ]]; then
+              echo "Latest tag '$latest_tag' is not a valid semver tag."
+              exit 1
+            fi
+            patch=$((patch + 1))
+            tag="v${major}.${minor}.${patch}"
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "name=Auto Release $tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create Git tag
+        run: |
+          git tag "${{ steps.meta.outputs.tag }}" "${GITHUB_SHA}"
+          git push origin "${{ steps.meta.outputs.tag }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.name }}
+          generate_release_notes: true
