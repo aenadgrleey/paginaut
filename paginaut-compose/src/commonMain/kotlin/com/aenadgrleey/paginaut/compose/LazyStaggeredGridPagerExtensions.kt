@@ -89,10 +89,19 @@ fun PaginationState<*>.forwardError(
 }
 
 context(scope: LazyStaggeredGridScope)
-fun PaginationState<*>.endReached(
+fun PaginationState<*>.forwardEndReached(
     content: @Composable LazyStaggeredGridItemScope.() -> Unit,
 ) {
     if (forward is LoadStatus.EndReached && items.isNotEmpty()) {
-        scope.item(key = PagerKeys.END_REACHED, span = StaggeredGridItemSpan.FullLine) { content() }
+        scope.item(key = PagerKeys.FORWARD_END_REACHED, span = StaggeredGridItemSpan.FullLine) { content() }
+    }
+}
+
+context(scope: LazyStaggeredGridScope)
+fun PaginationState<*>.backwardEndReached(
+    content: @Composable LazyStaggeredGridItemScope.() -> Unit,
+) {
+    if (backward is LoadStatus.EndReached && items.isNotEmpty()) {
+        scope.item(key = PagerKeys.BACKWARD_END_REACHED, span = StaggeredGridItemSpan.FullLine) { content() }
     }
 }

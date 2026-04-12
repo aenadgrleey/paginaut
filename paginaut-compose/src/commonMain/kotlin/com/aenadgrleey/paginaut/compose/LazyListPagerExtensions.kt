@@ -109,10 +109,19 @@ fun PaginationState<*>.forwardError(
 }
 
 context(scope: LazyListScope)
-fun PaginationState<*>.endReached(
+fun PaginationState<*>.forwardEndReached(
     content: @Composable LazyItemScope.() -> Unit,
 ) {
     if (forward is LoadStatus.EndReached && items.isNotEmpty()) {
-        scope.item(key = PagerKeys.END_REACHED) { content() }
+        scope.item(key = PagerKeys.FORWARD_END_REACHED) { content() }
+    }
+}
+
+context(scope: LazyListScope)
+fun PaginationState<*>.backwardEndReached(
+    content: @Composable LazyItemScope.() -> Unit,
+) {
+    if (backward is LoadStatus.EndReached && items.isNotEmpty()) {
+        scope.item(key = PagerKeys.BACKWARD_END_REACHED) { content() }
     }
 }

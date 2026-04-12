@@ -26,14 +26,7 @@ fun <Item : Any> PaginatedLazyHorizontalStaggeredGrid(
     paginationState: PaginationState<Item>,
     rows: StaggeredGridCells,
     modifier: Modifier = Modifier,
-    refreshIndicator: @Composable () -> Unit = {},
-    refreshErrorIndicator: @Composable (Throwable) -> Unit = {},
-    emptyIndicator: @Composable () -> Unit = {},
-    forwardLoadingIndicator: @Composable () -> Unit = {},
-    forwardErrorIndicator: @Composable (Throwable) -> Unit = {},
-    backwardLoadingIndicator: @Composable () -> Unit = {},
-    backwardErrorIndicator: @Composable (Throwable) -> Unit = {},
-    endReachedIndicator: @Composable () -> Unit = {},
+    indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -45,21 +38,23 @@ fun <Item : Any> PaginatedLazyHorizontalStaggeredGrid(
     contentType: (Item) -> Any? = { null },
     itemContent: @Composable LazyStaggeredGridItemScope.(Item) -> Unit,
 ) {
+    val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
+
     when {
         paginationState.init is LoadStatus.Loading && paginationState.items.isEmpty() -> {
-            Box(modifier, contentAlignment = Alignment.Center) { refreshIndicator() }
+            Box(modifier, contentAlignment = Alignment.Center) { indicatorConfig.init.loading() }
             return
         }
         paginationState.init is LoadStatus.Error && paginationState.items.isEmpty() -> {
             Box(modifier, contentAlignment = Alignment.Center) {
-                refreshErrorIndicator((paginationState.init as LoadStatus.Error).cause)
+                indicatorConfig.init.error((paginationState.init as LoadStatus.Error).cause)
             }
             return
         }
         paginationState.items.isEmpty()
                 && paginationState.init is LoadStatus.Idle
                 && paginationState.forward is LoadStatus.EndReached -> {
-            Box(modifier, contentAlignment = Alignment.Center) { emptyIndicator() }
+            Box(modifier, contentAlignment = Alignment.Center) { indicatorConfig.init.empty() }
             return
         }
     }
@@ -75,12 +70,13 @@ fun <Item : Any> PaginatedLazyHorizontalStaggeredGrid(
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
     ) {
-        paginationState.backwardLoading { backwardLoadingIndicator() }
-        paginationState.backwardError { backwardErrorIndicator(it) }
+        paginationState.backwardLoading { indicatorConfig.backward.loading() }
+        paginationState.backwardError { indicatorConfig.backward.error(it) }
+        paginationState.backwardEndReached { indicatorConfig.backward.empty() }
         paginationState.items(key, contentType, itemContent)
-        paginationState.forwardLoading { forwardLoadingIndicator() }
-        paginationState.forwardError { forwardErrorIndicator(it) }
-        paginationState.endReached { endReachedIndicator() }
+        paginationState.forwardLoading { indicatorConfig.forward.loading() }
+        paginationState.forwardError { indicatorConfig.forward.error(it) }
+        paginationState.forwardEndReached { indicatorConfig.forward.empty() }
     }
 }
 
@@ -89,14 +85,7 @@ fun <Key : Any, Item : Any> PaginatedLazyHorizontalStaggeredGrid(
     pager: BidirPager<Key, Item>,
     rows: StaggeredGridCells,
     modifier: Modifier = Modifier,
-    refreshIndicator: @Composable () -> Unit = {},
-    refreshErrorIndicator: @Composable (Throwable) -> Unit = {},
-    emptyIndicator: @Composable () -> Unit = {},
-    forwardLoadingIndicator: @Composable () -> Unit = {},
-    forwardErrorIndicator: @Composable (Throwable) -> Unit = {},
-    backwardLoadingIndicator: @Composable () -> Unit = {},
-    backwardErrorIndicator: @Composable (Throwable) -> Unit = {},
-    endReachedIndicator: @Composable () -> Unit = {},
+    indicators: PaginationIndicatorsScope.() -> Unit = {},
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
@@ -116,14 +105,7 @@ fun <Key : Any, Item : Any> PaginatedLazyHorizontalStaggeredGrid(
         paginationState = paginationState,
         rows = rows,
         modifier = modifier,
-        refreshIndicator = refreshIndicator,
-        refreshErrorIndicator = refreshErrorIndicator,
-        emptyIndicator = emptyIndicator,
-        forwardLoadingIndicator = forwardLoadingIndicator,
-        forwardErrorIndicator = forwardErrorIndicator,
-        backwardLoadingIndicator = backwardLoadingIndicator,
-        backwardErrorIndicator = backwardErrorIndicator,
-        endReachedIndicator = endReachedIndicator,
+        indicators = indicators,
         state = state,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
