@@ -3,7 +3,6 @@ package com.aenadgrleey.paginaut.compose
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridItemScope
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
@@ -17,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.aenadgrleey.paginaut.core.LoadStatus
 import com.aenadgrleey.paginaut.core.BidirPager
 import com.aenadgrleey.paginaut.core.PaginationState
 
@@ -40,25 +38,6 @@ fun <Item : Any> PaginatedLazyVerticalStaggeredGrid(
 ) {
     val indicatorConfig = PaginationIndicatorsScope().apply(indicators).build()
 
-    when {
-        paginationState.init is LoadStatus.Loading && paginationState.items.isEmpty() -> {
-            Box(modifier, contentAlignment = Alignment.Center) { indicatorConfig.init.loading() }
-            return
-        }
-        paginationState.init is LoadStatus.Error && paginationState.items.isEmpty() -> {
-            Box(modifier, contentAlignment = Alignment.Center) {
-                indicatorConfig.init.error((paginationState.init as LoadStatus.Error).cause)
-            }
-            return
-        }
-        paginationState.items.isEmpty()
-                && paginationState.init is LoadStatus.Idle
-                && paginationState.forward is LoadStatus.EndReached -> {
-            Box(modifier, contentAlignment = Alignment.Center) { indicatorConfig.init.empty() }
-            return
-        }
-    }
-
     LazyVerticalStaggeredGrid(
         columns = columns,
         modifier = modifier,
@@ -70,6 +49,9 @@ fun <Item : Any> PaginatedLazyVerticalStaggeredGrid(
         flingBehavior = flingBehavior,
         userScrollEnabled = userScrollEnabled,
     ) {
+        paginationState.firstPageLoading { indicatorConfig.init.loading() }
+        paginationState.firstPageError { indicatorConfig.init.error(it) }
+        paginationState.firstPageEmpty { indicatorConfig.init.empty() }
         paginationState.backwardLoading { indicatorConfig.backward.loading() }
         paginationState.backwardError { indicatorConfig.backward.error(it) }
         paginationState.backwardEndReached { indicatorConfig.backward.empty() }
