@@ -1,5 +1,7 @@
 package com.aenadgrleey.paginaut.core
 
+import androidx.compose.runtime.Immutable
+
 enum class Direction { Forward, Backward, Init }
 
 sealed interface LoadStatus {
@@ -49,6 +51,7 @@ data class VisibleRange(
     val lastVisible: Int = 0,
 )
 
+@Immutable
 data class PaginationState<Item : Any>(
     val items: List<Item> = emptyList(),
     val init: LoadStatus = LoadStatus.Idle,
@@ -57,6 +60,7 @@ data class PaginationState<Item : Any>(
 )
 
 
+@Immutable
 data class SimplePaginationState<Item : Any>(
     val items: List<Item> = emptyList(),
     val loadStatus: LoadStatus = LoadStatus.Idle,

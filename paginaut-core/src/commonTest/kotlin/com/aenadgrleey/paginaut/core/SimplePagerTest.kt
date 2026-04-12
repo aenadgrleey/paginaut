@@ -5,6 +5,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,6 +38,28 @@ class SimplePagerTest {
         val state = pager.state.value
         assertEquals(listOf("item-0", "item-1", "item-2"), state.items)
         assertEquals(LoadStatus.Idle, state.loadStatus)
+    }
+
+    @Test
+    fun paginationState_exposesDirectionalStatuses() = runTest {
+        val pager = SimplePager<Int, String>(
+            pageSize = 2,
+            coroutineContext = StandardTestDispatcher(testScheduler),
+        ) {
+            delay(100)
+            SimplePage(items = listOf("item-0", "item-1"), nextKey = null)
+        }
+
+        pager.init()
+        runCurrent()
+
+        val state = pager.paginationState.value
+        assertEquals(LoadStatus.Loading, state.init)
+        assertEquals(LoadStatus.Idle, state.forward)
+        assertEquals(LoadStatus.Idle, state.backward)
+
+        advanceUntilIdle()
+        assertEquals(listOf("item-0", "item-1"), pager.paginationState.value.items)
     }
 
     @Test

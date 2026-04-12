@@ -216,7 +216,7 @@ Also available: `PaginatedScrollRow`, `PaginatedVGrid(columns:)`, `PaginatedHGri
 ### Core Types
 
 - **`Pager<Key, Item>`** — Main interface. Exposes `state: StateFlow<PaginationState>`, plus `refresh()`, `retry(direction)`, `jumpTo(key)`, `update(block)`, and `close()`.
-- **`SimplePager<Key, Item>`** — Forward-only pager with a simplified `retry()`.
+- **`SimplePager<Key, Item>`** — Forward-only pager with a simplified `retry()`. Exposes `paginationState: StateFlow<PaginationState>` plus the collapsed `state: StateFlow<SimplePaginationState>`.
 - **`PaginationState<Item>`** — Holds `items: List<Item>` and load statuses (`init`, `forward`, `backward`).
 - **`SimplePaginationState<Item>`** — Holds `items: List<Item>` and a single `loadStatus`.
 - **`LoadStatus`** — `Idle`, `Loading`, `Error(cause)`, or `EndReached`.

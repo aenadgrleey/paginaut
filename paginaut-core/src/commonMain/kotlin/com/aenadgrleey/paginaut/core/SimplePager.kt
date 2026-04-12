@@ -39,6 +39,8 @@ open class SimplePager<Key : Any, Item : Any>(
             }
     }
 
+    val paginationState: StateFlow<PaginationState<Item>> = pager.state
+
     val state: StateFlow<SimplePaginationState<Item>> =
         pager.state
             .map { s -> s.toSimpleState() }

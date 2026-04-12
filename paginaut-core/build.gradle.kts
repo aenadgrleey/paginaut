@@ -72,6 +72,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.compose.runtime)
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
