@@ -140,11 +140,21 @@ Drop-in paginated lists and grids with customizable indicators:
 fun ItemList(pager: Pager<Int, Item>) {
     PaginatedLazyColumn(
         pager = pager,
-        refreshIndicator = { CircularProgressIndicator() },
-        refreshErrorIndicator = { error -> Text("Error: ${error.message}") },
-        emptyIndicator = { Text("No items") },
-        forwardLoadingIndicator = { CircularProgressIndicator() },
-        forwardErrorIndicator = { error -> Text("Load failed") },
+        indicators = {
+            initStateIndicator {
+                loading { CircularProgressIndicator() }
+                error { error -> Text("Error: ${error.message}") }
+                empty { Text("No items") }
+            }
+            forwardStateIndicator {
+                loading { CircularProgressIndicator() }
+                error { _ -> Text("Load failed") }
+                empty { Text("End reached") }
+            }
+            backwardStateIndicator {
+                error { _ -> Text("Load failed") }
+            }
+        },
     ) { item ->
         ItemRow(item)
     }
@@ -152,6 +162,30 @@ fun ItemList(pager: Pager<Int, Item>) {
 ```
 
 Also available: `PaginatedLazyRow`, `PaginatedLazyVerticalGrid`, `PaginatedLazyHorizontalGrid`, `PaginatedLazyVerticalStaggeredGrid`, `PaginatedLazyHorizontalStaggeredGrid`.
+
+Grouped rendering for list-based composables is available via `grouping`:
+
+```kotlin
+PaginatedLazyColumn(
+    pager = pager,
+    indicators = {
+        forwardStateIndicator {
+            empty { Text("No more items") }
+        }
+        backwardStateIndicator {
+            empty { Text("Reached start") }
+        }
+    },
+    grouping = {
+        groupBy { it.date }
+        groupHeader { date, _ -> Text(date.toString()) }
+        groupFooter { _, _ -> Divider() }
+        key = { it.id }
+    },
+) { item ->
+    ItemRow(item)
+}
+```
 
 ### SwiftUI
 

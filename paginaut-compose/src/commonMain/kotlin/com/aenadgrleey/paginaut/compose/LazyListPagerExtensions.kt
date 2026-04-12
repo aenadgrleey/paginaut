@@ -21,6 +21,100 @@ fun <Item : Any> PaginationState<Item>.items(
     }
 }
 
+private data class GroupedListEntryKey(
+    val type: String,
+    val index: Int,
+    val itemKey: Any?,
+)
+
+class GroupedItemsDsl<Item : Any, GroupKey : Any> {
+    var key: ((Item) -> Any)? = null
+    var contentType: (Item) -> Any? = { null }
+
+    internal var groupByFn: ((Item) -> GroupKey)? = null
+    internal var groupHeaderFn: (@Composable LazyItemScope.(groupKey: GroupKey, firstItem: Item) -> Unit)? = null
+    internal var groupFooterFn: (@Composable LazyItemScope.(groupKey: GroupKey, lastItem: Item) -> Unit)? = null
+
+    fun groupBy(selector: (Item) -> GroupKey) {
+        groupByFn = selector
+    }
+
+    fun groupHeader(content: @Composable LazyItemScope.(groupKey: GroupKey, firstItem: Item) -> Unit) {
+        groupHeaderFn = content
+    }
+
+    fun groupFooter(content: @Composable LazyItemScope.(groupKey: GroupKey, lastItem: Item) -> Unit) {
+        groupFooterFn = content
+    }
+
+    internal fun getGroupBy(): (Item) -> GroupKey = checkNotNull(groupByFn) {
+        "groupBy { ... } must be provided for groupedItems."
+    }
+
+    internal fun getGroupHeader():
+        (@Composable LazyItemScope.(groupKey: GroupKey, firstItem: Item) -> Unit)? = groupHeaderFn
+
+    internal fun getGroupFooter():
+        (@Composable LazyItemScope.(groupKey: GroupKey, lastItem: Item) -> Unit)? = groupFooterFn
+}
+
+context(scope: LazyListScope)
+fun <Item : Any, GroupKey : Any> PaginationState<Item>.groupedItems(
+    grouping: GroupedItemsDsl<Item, GroupKey>.() -> Unit,
+    itemContent: @Composable LazyItemScope.(Item) -> Unit,
+) {
+    if (items.isEmpty()) return
+
+    val config = GroupedItemsDsl<Item, GroupKey>().apply(grouping)
+    val groupBy = config.getGroupBy()
+    val key = config.key
+    val contentType = config.contentType
+    val groupHeader = config.getGroupHeader()
+    val groupFooter = config.getGroupFooter()
+
+    val lastIndex = items.lastIndex
+    for (index in 0..lastIndex) {
+        val item = items[index]
+        val groupKey = groupBy(item)
+        val prevGroupKey = items.getOrNull(index - 1)?.let(groupBy)
+        val nextGroupKey = items.getOrNull(index + 1)?.let(groupBy)
+        val isGroupStart = prevGroupKey != groupKey
+        val isGroupEnd = nextGroupKey != groupKey
+        val itemKey = key?.invoke(item)
+
+        groupHeader?.takeIf { isGroupStart }?.let { header ->
+            scope.item(
+                key = GroupedListEntryKey(
+                    type = "header",
+                    index = index,
+                    itemKey = itemKey,
+                ),
+            ) {
+                header(groupKey, item)
+            }
+        }
+
+        scope.item(
+            key = itemKey,
+            contentType = contentType(item),
+        ) {
+            itemContent(item)
+        }
+
+        groupFooter?.takeIf { isGroupEnd }?.let { footer ->
+            scope.item(
+                key = GroupedListEntryKey(
+                    type = "footer",
+                    index = index,
+                    itemKey = itemKey,
+                ),
+            ) {
+                footer(groupKey, item)
+            }
+        }
+    }
+}
+
 context(scope: LazyListScope)
 fun PaginationState<*>.firstPageLoading(
     viewport: ListViewportState? = null,
@@ -55,7 +149,7 @@ fun PaginationState<*>.firstPageError(
 }
 
 context(scope: LazyListScope)
-fun PaginationState<*>.empty(
+fun PaginationState<*>.firstPageEmpty(
     viewport: ListViewportState? = null,
     content: @Composable LazyItemScope.() -> Unit,
 ) {

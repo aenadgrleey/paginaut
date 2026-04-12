@@ -59,7 +59,7 @@ fun PaginationState<*>.firstPageError(
 }
 
 context(scope: LazyGridScope)
-fun PaginationState<*>.empty(
+fun PaginationState<*>.firstPageEmpty(
     viewport: GridViewportState? = null,
     content: @Composable LazyGridItemScope.() -> Unit,
 ) {

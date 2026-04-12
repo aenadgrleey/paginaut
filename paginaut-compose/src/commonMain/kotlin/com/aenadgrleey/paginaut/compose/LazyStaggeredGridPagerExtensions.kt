@@ -42,7 +42,7 @@ fun PaginationState<*>.firstPageError(
 }
 
 context(scope: LazyStaggeredGridScope)
-fun PaginationState<*>.empty(
+fun PaginationState<*>.firstPageEmpty(
     content: @Composable LazyStaggeredGridItemScope.() -> Unit,
 ) {
     if (items.isEmpty() && init is LoadStatus.Idle && forward is LoadStatus.EndReached) {
