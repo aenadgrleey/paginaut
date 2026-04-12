@@ -26,20 +26,32 @@ private data class GroupedListEntryKey(
     val itemKey: Any?,
 )
 
+internal data class GroupStartSpec<Item : Any, GroupKey : Any>(
+    val sticky: Boolean,
+    val content: @Composable LazyItemScope.(groupKey: GroupKey, firstItem: Item) -> Unit,
+)
+
 class GroupedItemsDsl<Item : Any, GroupKey : Any> internal constructor() {
     var key: ((Item) -> Any)? = null
     var contentType: (Item) -> Any? = { null }
 
     internal var groupByFn: ((Item) -> GroupKey)? = null
-    internal var groupStartFn: (@Composable LazyItemScope.(groupKey: GroupKey, firstItem: Item) -> Unit)? = null
-    internal var groupEndFn: (@Composable LazyItemScope.(groupKey: GroupKey, lastItem: Item) -> Unit)? = null
+    internal var groupStartFn: GroupStartSpec<Item, GroupKey>? = null
+    internal var groupEndFn: (@Composable LazyItemScope.(groupKey: GroupKey, lastItem: Item) -> Unit)? =
+        null
 
     fun groupBy(selector: (Item) -> GroupKey) {
         groupByFn = selector
     }
 
-    fun groupStart(content: @Composable LazyItemScope.(groupKey: GroupKey, firstItem: Item) -> Unit) {
-        groupStartFn = content
+    fun groupStart(
+        sticky: Boolean = false,
+        content: @Composable LazyItemScope.(groupKey: GroupKey, firstItem: Item) -> Unit,
+    ) {
+        groupStartFn = GroupStartSpec(
+            sticky = sticky,
+            content = content,
+        )
     }
 
     fun groupEnd(content: @Composable LazyItemScope.(groupKey: GroupKey, lastItem: Item) -> Unit) {
@@ -74,15 +86,20 @@ fun <Item : Any, GroupKey : Any> PaginationState<Item>.groupedItems(
         val isGroupEnd = nextGroupKey != groupKey
         val itemKey = key?.invoke(item)
 
-        config.groupStartFn?.takeIf { isGroupStart }?.let {
-            scope.item(
-                key = GroupedListEntryKey(
-                    type = "header",
-                    index = index,
-                    itemKey = itemKey,
-                ),
-            ) {
-                it(groupKey, item)
+        config.groupStartFn?.takeIf { isGroupStart }?.let { header ->
+            val headerKey = GroupedListEntryKey(
+                type = if (header.sticky) "sticky-header" else "header",
+                index = index,
+                itemKey = itemKey,
+            )
+            if (header.sticky) {
+                scope.stickyHeader(key = headerKey) {
+                    header.content.invoke(this, groupKey, item)
+                }
+            } else {
+                scope.item(key = headerKey) {
+                    header.content.invoke(this, groupKey, item)
+                }
             }
         }
 

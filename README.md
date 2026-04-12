@@ -178,7 +178,7 @@ PaginatedLazyColumn(
     },
     grouping = {
         groupBy { it.date }
-        groupHeader { date, _ -> Text(date.toString()) }
+        groupStart(sticky = true) { date, _ -> Text(date.toString()) }
         groupEnd { _, _ -> Divider() }
         key = { it.id }
     },
