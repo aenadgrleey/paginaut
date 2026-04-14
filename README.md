@@ -8,7 +8,7 @@ Pagination for Kotlin Multiplatform. Handles paginated data loading with built-i
 |---|---|---|
 | `paginaut-core` | Core pagination logic | Android, JVM, iOS, macOS, JS, Wasm, Linux, Windows |
 | `paginaut-compose` | Compose UI components | Android, JVM (Desktop), iOS, Wasm |
-| `paginaut-swiftui` | SwiftUI components | iOS 16+, macOS 13+ |
+| `paginaut-swiftui` | SwiftUI source integration | iOS 16+, macOS 13+ |
 
 ## Installation
 
@@ -33,9 +33,26 @@ dependencies {
 }
 ```
 
-### Swift Package Manager
+### SwiftUI Source Generation
 
-Add the `paginaut-swiftui` package to your Xcode project or `Package.swift`.
+The SwiftUI layer should be compiled against the Kotlin framework your app builds itself.
+Shipping a prebuilt Kotlin XCFramework through SwiftPM is brittle across toolchains, so the
+recommended flow is to generate the Swift wrapper sources and add them to your Xcode target.
+
+Generate the sources:
+
+```bash
+./gradlew generateSwiftUiSources \
+  -Ppaginaut.swift.module=Shared \
+  -Ppaginaut.swift.outputDir=../iosApp/Generated/PaginautSwiftUI
+```
+
+Properties:
+
+- `paginaut.swift.module` — Kotlin framework module to import from Swift. Defaults to `PaginautCore`.
+- `paginaut.swift.outputDir` — Output directory for generated `.swift` files. Defaults to `build/generated/swiftui/PaginautSwiftUI`.
+
+Then add the generated Swift files to the Apple target that already links your Kotlin framework.
 
 ## Usage
 

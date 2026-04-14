@@ -1,10 +1,10 @@
 @preconcurrency import PaginautCore
 import SwiftUI
 
-public struct PaginatedScrollRow<Item: AnyObject, ItemContent: View>: View {
+public struct PaginatedScrollRow<Key: AnyObject, Item: AnyObject, ItemContent: View>: View {
 
-    @StateObject private var pagerState: PagerState<Item>
-    @StateObject private var tracker: VisibleRangeTracker
+    @StateObject private var pagerState: PagerState<Key, Item>
+    @StateObject private var tracker: VisibleRangeTracker<Key, Item>
 
     private let indicators: PaginationIndicators
     private let spacing: CGFloat?
@@ -13,7 +13,7 @@ public struct PaginatedScrollRow<Item: AnyObject, ItemContent: View>: View {
     private let itemContent: (Item) -> ItemContent
 
     public init(
-        pager: some Pager,
+        pager: BidirPager<Key, Item>,
         indicators: PaginationIndicators = PaginationIndicators(),
         spacing: CGFloat? = nil,
         contentInsets: EdgeInsets = .init(),

@@ -1,10 +1,10 @@
 @preconcurrency import PaginautCore
 import SwiftUI
 
-public struct PaginatedVGrid<Item: AnyObject, ItemContent: View>: View {
+public struct PaginatedVGrid<Key: AnyObject, Item: AnyObject, ItemContent: View>: View {
 
-    @StateObject private var pagerState: PagerState<Item>
-    @StateObject private var tracker: VisibleRangeTracker
+    @StateObject private var pagerState: PagerState<Key, Item>
+    @StateObject private var tracker: VisibleRangeTracker<Key, Item>
 
     private let columns: [GridItem]
     private let indicators: PaginationIndicators
@@ -14,7 +14,7 @@ public struct PaginatedVGrid<Item: AnyObject, ItemContent: View>: View {
     private let itemContent: (Item) -> ItemContent
 
     public init(
-        pager: some Pager,
+        pager: BidirPager<Key, Item>,
         columns: [GridItem],
         indicators: PaginationIndicators = PaginationIndicators(),
         spacing: CGFloat? = nil,

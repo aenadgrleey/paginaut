@@ -2,12 +2,12 @@
 import SwiftUI
 
 @MainActor
-final class VisibleRangeTracker: ObservableObject {
+final class VisibleRangeTracker<Key: AnyObject, Item: AnyObject>: ObservableObject {
 
     private var visibleIndices: Set<Int> = []
-    private let pager: any Pager
+    private let pager: BidirPager<Key, Item>
 
-    init(pager: some Pager) {
+    init(pager: BidirPager<Key, Item>) {
         self.pager = pager
     }
 

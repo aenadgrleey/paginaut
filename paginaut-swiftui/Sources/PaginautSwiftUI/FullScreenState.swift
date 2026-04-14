@@ -7,14 +7,14 @@ enum FullScreenPaginationState {
 }
 
 func fullScreenState(_ state: PaginationState<AnyObject>) -> FullScreenPaginationState? {
-    if state.refresh is LoadStatusLoading && state.items.isEmpty {
+    if state.`init` is LoadStatusLoading && state.items.isEmpty {
         return .loading
     }
-    if let error = state.refresh as? LoadStatusError, state.items.isEmpty {
+    if let error = state.`init` as? LoadStatusError, state.items.isEmpty {
         return .error(error.cause)
     }
     if state.items.isEmpty
-        && state.refresh is LoadStatusIdle
+        && state.`init` is LoadStatusIdle
         && state.forward is LoadStatusEndReached
     {
         return .empty

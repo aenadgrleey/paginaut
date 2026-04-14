@@ -31,3 +31,6 @@ Package.resolved
 # XCFramework build outputs
 *.xcframework/
 /gradle/gradle-daemon-jvm.properties
+
+# Generated SwiftUI demo sources
+demo/swiftui-compat/Generated/

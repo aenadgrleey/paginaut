@@ -31,3 +31,4 @@ dependencyResolutionManagement {
 
 include(":paginaut-core")
 include(":paginaut-compose")
+include(":swiftui-compat-demo-shared")

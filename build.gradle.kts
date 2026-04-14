@@ -10,3 +10,20 @@ allprojects {
     group = property("paginaut.group") as String
     version = property("paginaut.version") as String
 }
+
+val swiftUiFrameworkModule = providers.gradleProperty("paginaut.swift.module")
+    .orElse("PaginautCore")
+val swiftUiOutputDir = providers.gradleProperty("paginaut.swift.outputDir").orNull
+
+tasks.register<GenerateSwiftUiSourcesTask>("generateSwiftUiSources") {
+    group = "swift"
+    description = "Generates Paginaut SwiftUI sources for a Kotlin framework module."
+
+    sourceDir.set(layout.projectDirectory.dir("paginaut-swiftui/Sources/PaginautSwiftUI"))
+    frameworkModuleName.set(swiftUiFrameworkModule)
+    if (swiftUiOutputDir != null) {
+        outputDir.set(layout.projectDirectory.dir(swiftUiOutputDir))
+    } else {
+        outputDir.set(layout.buildDirectory.dir("generated/swiftui/PaginautSwiftUI"))
+    }
+}
