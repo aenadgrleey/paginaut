@@ -41,30 +41,32 @@ jobs:
         id: meta
         shell: bash
         run: |
-          latest_tag="$(git tag -l 'v*.*.*' --sort=-version:refname | head -n 1)"
+          version="$(grep 'paginaut.version' gradle.properties | cut -d= -f2 | tr -d ' ')"
+          if [[ -z "$version" ]]; then
+            echo "Could not read paginaut.version from gradle.properties"
+            exit 1
+          fi
 
-          if [[ -z "$latest_tag" ]]; then
-            tag="v0.0.1"
-          else
-            version="${latest_tag#v}"
-            IFS='.' read -r major minor patch <<< "$version"
-            if [[ -z "$major" || -z "$minor" || -z "$patch" ]]; then
-              echo "Latest tag '$latest_tag' is not a valid semver tag."
-              exit 1
-            fi
-            patch=$((patch + 1))
-            tag="v${major}.${minor}.${patch}"
+          tag="v${version}"
+          existing="$(git tag -l "$tag")"
+          if [[ -n "$existing" ]]; then
+            echo "Tag $tag already exists — nothing to release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "name=Auto Release $tag" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
 
       - name: Create Git tag
+        if: steps.meta.outputs.skip != 'true'
         run: |
           git tag "${{ steps.meta.outputs.tag }}" "${GITHUB_SHA}"
           git push origin "${{ steps.meta.outputs.tag }}"
 
       - name: Create GitHub release
+        if: steps.meta.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
