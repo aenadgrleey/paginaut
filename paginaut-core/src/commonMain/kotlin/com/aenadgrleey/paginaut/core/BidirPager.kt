@@ -99,9 +99,9 @@ open class BidirPager<Key : Any, Item : Any>(
         scope.launch { mutex.withLock { doLoad(Direction.Backward) } }
     }
 
-    fun update(block: (List<Item>) -> List<Item>) {
+    fun update(block: suspend (List<Item>) -> List<Item>) {
         scope.launch {
-            mutex.withLock { _state.update { it.copy(items = block(it.items)) } }
+            mutex.withLock { _state.update { it.copy(items = deduplicate(block(it.items))) } }
         }
     }
 
