@@ -28,10 +28,17 @@ Add the dependencies:
 
 ```kotlin
 dependencies {
-    implementation("com.aenadgrleey.paginaut:paginaut-core:0.1.0")
-    implementation("com.aenadgrleey.paginaut:paginaut-compose:0.1.0") // for Compose
+    implementation("com.aenadgrleey.paginaut:paginaut-core:0.3.4")
+    implementation("com.aenadgrleey.paginaut:paginaut-compose:0.3.4") // for Compose
 }
 ```
+
+Notes:
+
+- These are **Kotlin Multiplatform Maven artifacts**. For KMP consumers, add them to `commonMain` and Gradle will resolve the iOS-specific publications automatically.
+- The published iOS artifacts are Kotlin/Native `.klib` publications, not Swift packages or XCFrameworks.
+- This repository does **not** publish a remote `Package.swift`/XCFramework for `paginaut-core` or `paginaut-compose`; the `paginaut-swiftui` module is a source-generation helper that expects your app to build the Kotlin framework itself.
+- The core module has no cinterop or CocoaPods dependencies, so iOS `.klib` publication should work from a Linux-based JitPack build. If iOS resolution fails, the usual causes are missing publications, wrong coordinates/version, or consuming the artifact from the wrong packaging format.
 
 ### SwiftUI Source Generation
 

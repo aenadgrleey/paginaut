@@ -34,6 +34,11 @@ publishing {
 }
 
 kotlin {
+    val buildXcframework = providers.gradleProperty("paginaut.build.xcframework")
+        .map { it.toBooleanStrictOrNull() ?: true }
+        .getOrElse(true)
+    val xcf = if (buildXcframework) XCFramework("PaginautCore") else null
+
     androidLibrary {
         namespace = "com.aenadgrleey.paginaut.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -52,13 +57,11 @@ kotlin {
         browser()
     }
 
-    val xcf = XCFramework("PaginautCore")
-
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
             baseName = "PaginautCore"
             isStatic = true
-            xcf.add(this)
+            xcf?.add(this)
         }
     }
 
