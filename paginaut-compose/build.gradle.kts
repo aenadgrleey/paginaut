@@ -57,17 +57,17 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.paginautCore)
+            api(projects.paginautCore)
             @Suppress("DEPRECATION")
-            implementation(compose.runtime)
+            api(compose.runtime)
             @Suppress("DEPRECATION")
-            implementation(compose.foundation)
+            api(compose.foundation)
             @Suppress("DEPRECATION")
-            implementation(compose.material3)
+            api(compose.material3)
             @Suppress("DEPRECATION")
-            implementation(compose.ui)
+            api(compose.ui)
             @Suppress("DEPRECATION")
-            implementation(compose.components.resources)
+            api(compose.components.resources)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
