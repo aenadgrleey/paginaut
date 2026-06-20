@@ -50,6 +50,10 @@ tasks.register<GenerateSwiftUiSourcesTask>("generateSwiftUiSources") {
 val patchPaginautNativeModule by tasks.registering {
     group = "publishing"
     description = "Patches .module files for native targets in the local Maven repo to use classified file names."
+    // The doLast block references JsonSlurper/JsonOutput from the Gradle
+    // classpath and walks the local Maven repo; the script-level patchModuleFile
+    // function can't be serialized for the configuration cache, so exclude.
+    notCompatibleWithConfigurationCache("Patch task reads local Maven repo; not safe to cache.")
 
     doLast {
         val m2Root = File(System.getProperty("maven.repo.local")
