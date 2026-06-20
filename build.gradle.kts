@@ -101,9 +101,12 @@ fun patchModuleFile(moduleFile: File, slurper: JsonSlurper) {
 }
 
 subprojects {
-    afterEvaluate {
-        tasks.matching { it.name == "publishToMavenLocal" }.configureEach {
-            dependsOn(patchPaginautNativeModule)
-        }
+    // Run the patch *after* the publish, not before. JitPack invokes
+    // `./gradlew publishToMavenLocal`; if patch runs first, the local Maven
+    // repo is empty and there's nothing to fix. By making the patch
+    // finalize the publish, we guarantee the .module files are in place when
+    // the patch walks the repo.
+    tasks.matching { it.name == "publishToMavenLocal" }.configureEach {
+        finalizedBy(patchPaginautNativeModule)
     }
 }
