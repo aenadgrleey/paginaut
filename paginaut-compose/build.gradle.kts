@@ -72,5 +72,24 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+
+        // Don't publish sources/metadata jars for native targets. See the
+        // equivalent comment in paginaut-core/build.gradle.kts for the full
+        // rationale. In short: JitPack regenerates .module files on upload
+        // and drops the `-sources` / `-metadata` classifiers, so the
+        // regenerated .module points at filenames that 404. We drop both
+        // variants from the publication so there's nothing for JitPack to
+        // mis-attribute. Consumers fall back to the .pom and use the klib
+        // directly.
+        targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
+            mavenPublication {
+                withSourcesJar(false)
+            }
+            tasks.matching {
+                it.name.endsWith("MetadataElements") && !it.name.startsWith("metadata")
+            }.configureEach {
+                this.setEnabled(false)
+            }
+        }
     }
 }
